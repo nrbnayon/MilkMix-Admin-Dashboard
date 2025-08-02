@@ -75,10 +75,10 @@ export default function UserSubscriptions({
       width: "100px",
       align: "center",
       options: [
-        { value: "free", label: "Free", color: "#9ca3af" },
-        { value: "basic", label: "Basic", color: "#10b981" },
-        { value: "premium", label: "Premium", color: "#f59e0b" },
-        { value: "enterprise", label: "Enterprise", color: "#1e40af" },
+        { value: "free", label: "Free Plan", color: "#9ca3af" },
+        { value: "personal", label: "Personal Plan", color: "#10b981" },
+        { value: "enterprise", label: "Enterprise Plan", color: "#1e40af" },
+        { value: "consultant", label: "Consultant Plan", color: "#f59e0b" },
       ],
     },
   ];
@@ -218,11 +218,11 @@ export default function UserSubscriptions({
     //   section: "account",
     //   gridCol: "half",
     //   options: [
-    //     { value: "free", label: "Free" },
-    //     { value: "basic", label: "Basic" },
-    //     { value: "premium", label: "Premium" },
-    //     { value: "enterprise", label: "Enterprise" },
-    //   ],
+    //    { value: "free", label: "Free Plan", color: "#9ca3af" },
+    // { value: "personal", label: "Personal Plan", color: "#10b981" },
+    // { value: "enterprise", label: "Enterprise Plan", color: "#1e40af" },
+    // { value: "consultant", label: "Consultant Plan", color: "#f59e0b" },
+    // //   ],
     // },
   ];
 
@@ -244,10 +244,10 @@ export default function UserSubscriptions({
       label: "Subscriptions",
       type: "select",
       options: [
-        { value: "free", label: "Free" },
-        { value: "basic", label: "Basic" },
-        { value: "premium", label: "Premium" },
-        { value: "enterprise", label: "Enterprise" },
+        { value: "free", label: "Free Plan", color: "#9ca3af" },
+        { value: "personal", label: "Personal Plan", color: "#10b981" },
+        { value: "enterprise", label: "Enterprise Plan", color: "#1e40af" },
+        { value: "consultant", label: "Consultant Plan", color: "#f59e0b" },
       ],
     },
   ];
@@ -277,7 +277,7 @@ export default function UserSubscriptions({
       label: "Edit",
       icon: (
         <Lordicon
-          src="https://cdn.lordicon.com/cbtlerlm.json" 
+          src="https://cdn.lordicon.com/cbtlerlm.json"
           trigger="hover"
           size={20}
           colors={{

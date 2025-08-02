@@ -202,9 +202,10 @@ export default function UserManagement({
       section: "account",
       gridCol: "half",
       options: [
-        { value: "free", label: "Free" },
-        { value: "premium", label: "Premium" },
-        { value: "enterprise", label: "Enterprise" },
+        { value: "free", label: "Free Plan", color: "#9ca3af" },
+        { value: "personal", label: "Personal Plan", color: "#10b981" },
+        { value: "enterprise", label: "Enterprise Plan", color: "#1e40af" },
+        { value: "consultant", label: "Consultant Plan", color: "#f59e0b" },
       ],
     },
   ];
@@ -227,9 +228,10 @@ export default function UserManagement({
       label: "Account Type",
       type: "select",
       options: [
-        { value: "free", label: "Free" },
-        { value: "premium", label: "Premium" },
-        { value: "enterprise", label: "Enterprise" },
+        { value: "free", label: "Free Plan", color: "#9ca3af" },
+        { value: "personal", label: "Personal Plan", color: "#10b981" },
+        { value: "enterprise", label: "Enterprise Plan", color: "#1e40af" },
+        { value: "consultant", label: "Consultant Plan", color: "#f59e0b" },
       ],
     },
   ];

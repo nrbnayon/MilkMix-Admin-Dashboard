@@ -55,16 +55,16 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
       href: "/manage-users",
       iconSrc: "https://cdn.lordicon.com/fqbvgezn.json",
     },
-    {
-      label: "Manage Post",
-      href: "/manage-post",
-      iconSrc: "https://cdn.lordicon.com/ldyubhgs.json",
-    },
-    {
-      label: "Manage Categories",
-      href: "/manage-categories",
-      iconSrc: "https://cdn.lordicon.com/dutqakce.json",
-    },
+    // {
+    //   label: "Manage Post",
+    //   href: "/manage-post",
+    //   iconSrc: "https://cdn.lordicon.com/ldyubhgs.json",
+    // },
+    // {
+    //   label: "Manage Categories",
+    //   href: "/manage-categories",
+    //   iconSrc: "https://cdn.lordicon.com/dutqakce.json",
+    // },
     {
       label: "Users Subscription",
       href: "/users-subscription",
