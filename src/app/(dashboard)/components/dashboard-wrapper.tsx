@@ -183,7 +183,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
                         icon: (
                           <Lordicon
                             src={link.iconSrc}
-                            trigger='hover'
+                            trigger='loop-on-hover'
                             stroke={3}
                             colors={getIconColors(isActive, isDark)}
                             size={24}
