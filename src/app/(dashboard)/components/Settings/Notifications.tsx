@@ -328,19 +328,19 @@ export default function Notifications() {
   const getNotificationIcon = (type: NotificationData["type"]) => {
     switch (type) {
       case "success":
-        return <CheckCircle className='w-5 h-5 text-green-600' />;
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
       case "warning":
-        return <AlertCircle className='w-5 h-5 text-yellow-600' />;
+        return <AlertCircle className="w-5 h-5 text-yellow-600" />;
       case "error":
-        return <AlertCircle className='w-5 h-5 text-red-600' />;
+        return <AlertCircle className="w-5 h-5 text-red-600" />;
       case "user":
-        return <User className='w-5 h-5 text-blue-600' />;
+        return <User className="w-5 h-5 text-blue-600" />;
       case "system":
-        return <Settings className='w-5 h-5 text-gray-600' />;
+        return <Settings className="w-5 h-5 text-gray-600" />;
       case "payment":
-        return <DollarSign className='w-5 h-5 text-green-600' />;
+        return <DollarSign className="w-5 h-5 text-green-600" />;
       default:
-        return <Info className='w-5 h-5 text-blue-600' />;
+        return <Info className="w-5 h-5 text-blue-600" />;
     }
   };
 
@@ -506,36 +506,36 @@ export default function Notifications() {
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
-    <div className='p-3 md:p-6'>
+    <div className="p-3 md:p-6">
       {/* Header */}
-      <div className='flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4'>
-        <div className='flex items-center space-x-3'>
-          <div className='relative'>
-            <Bell className='w-6 h-6 text-gray-700' />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+        <div className="flex items-center space-x-3">
+          <div className="relative">
+            <Bell className="w-6 h-6 text-gray-700" />
             {unreadCount > 0 && (
-              <Badge className='absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs'>
+              <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
                 {unreadCount}
               </Badge>
             )}
           </div>
           <div>
-            <h3 className='text-xl font-semibold text-foreground'>
+            <h3 className="text-xl font-semibold text-foreground">
               Notifications
             </h3>
-            <p className='text-muted-foreground'>
+            <p className="text-muted-foreground">
               {notifications.length} total, {unreadCount} unread
             </p>
           </div>
         </div>
 
-        <div className='flex gap-2'>
+        <div className="flex gap-2">
           <Button
             onClick={markAllAsRead}
-            variant='outline'
-            size='sm'
+            variant="outline"
+            size="sm"
             disabled={unreadCount === 0}
           >
-            <CheckCircle className='w-4 h-4 mr-2' />
+            <CheckCircle className="w-4 h-4 mr-2" />
             Mark All Read
           </Button>
         </div>
@@ -546,18 +546,18 @@ export default function Notifications() {
         state={searchFilterState}
         config={searchFilterConfig}
         onStateChange={setSearchFilterState}
-        className='mb-6'
+        className="mb-6"
       />
 
       {/* Notifications List */}
-      <div className='space-y-2 max-h-[600px] overflow-y-auto scrollbar-custom'>
+      <div className="space-y-2 max-h-[650px] overflow-y-auto scrollbar-custom">
         {currentNotifications.length === 0 ? (
-          <div className='text-center py-12'>
-            <Bell className='w-12 h-12 text-foreground mx-auto mb-4' />
-            <h3 className='text-lg font-medium text-foreground mb-2'>
+          <div className="text-center py-12">
+            <Bell className="w-12 h-12 text-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">
               No notifications found
             </h3>
-            <p className='text-muted-foreground'>
+            <p className="text-muted-foreground">
               {searchFilterState.search ||
               Object.keys(searchFilterState.filters).length > 0
                 ? "Try adjusting your search or filters"
@@ -575,17 +575,17 @@ export default function Notifications() {
                   "border-l-4 border-l-blue-500 bg-blue-50/30"
               )}
             >
-              <div className='flex items-start gap-3'>
+              <div className="flex items-start gap-3">
                 {/* Icon */}
-                <div className='mt-1 flex-shrink-0'>
+                <div className="mt-1 flex-shrink-0">
                   {getNotificationIcon(notification.type)}
                 </div>
 
                 {/* Content */}
-                <div className='flex-1 min-w-0'>
-                  <div className='flex items-start justify-between gap-2'>
-                    <div className='flex-1'>
-                      <div className='flex items-center gap-2 mb-1'>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
                         <h4
                           className={cn(
                             "text-sm font-medium text-black truncate",
@@ -595,17 +595,17 @@ export default function Notifications() {
                           {notification.title}
                         </h4>
                         {!notification.isRead && (
-                          <div className='w-2 h-2 bg-blue-600 rounded-full flex-shrink-0' />
+                          <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0" />
                         )}
                       </div>
 
-                      <p className='text-sm text-muted-foreground line-clamp-2 mb-2'>
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
                         {notification.message}
                       </p>
 
-                      <div className='flex items-center gap-2 flex-wrap'>
+                      <div className="flex items-center gap-2 flex-wrap">
                         <Badge
-                          variant='outline'
+                          variant="outline"
                           className={cn(
                             "text-xs",
                             getPriorityColor(notification.priority)
@@ -614,12 +614,12 @@ export default function Notifications() {
                           {notification.priority}
                         </Badge>
 
-                        <Badge variant='secondary' className='text-xs'>
+                        <Badge variant="secondary" className="text-xs">
                           {notification.category}
                         </Badge>
 
-                        <div className='flex items-center text-xs text-gray-500'>
-                          <Clock className='w-3 h-3 mr-1' />
+                        <div className="flex items-center text-xs text-gray-500">
+                          <Clock className="w-3 h-3 mr-1" />
                           {formatTimeAgo(notification.createdAt)}
                         </div>
                       </div>
@@ -629,19 +629,19 @@ export default function Notifications() {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
-                          variant='ghost'
-                          size='sm'
-                          className='h-8 w-8 p-0'
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <MoreVertical className='w-4 h-4' />
+                          <MoreVertical className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end'>
+                      <DropdownMenuContent align="end">
                         <DropdownMenuItem
                           onClick={(e) => toggleReadStatus(notification.id, e)}
                         >
-                          <EyeOff className='w-4 h-4 mr-2' />
+                          <EyeOff className="w-4 h-4 mr-2" />
                           Mark as {notification.isRead ? "Unread" : "Read"}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
@@ -649,9 +649,9 @@ export default function Notifications() {
                           onClick={(e) =>
                             deleteNotification(notification.id, e)
                           }
-                          className='text-red-600 focus:text-red-600'
+                          className="text-red-600 focus:text-red-600"
                         >
-                          <Trash2 className='w-4 h-4 mr-2' />
+                          <Trash2 className="w-4 h-4 mr-2" />
                           Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -666,22 +666,21 @@ export default function Notifications() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className='flex items-center justify-between mt-6'>
-          <div className='text-sm text-gray-500'>
+        <div className="flex items-center justify-between mt-6">
+          <div className="text-sm text-gray-500">
             Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of{" "}
             {totalItems} notifications
           </div>
-          <div className='flex items-center gap-2'>
+          <div className="flex items-center gap-2">
             <Button
-              variant='outline'
-              size='sm'
+              variant="outline"
+              size="sm"
               onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
             >
-              <ChevronLeft className='w-4 h-4' />
-              
+              <ChevronLeft className="w-4 h-4" />
             </Button>
-            <div className='flex items-center gap-1'>
+            <div className="flex items-center gap-1">
               {Array.from({ length: totalPages }, (_, i) => i + 1)
                 .filter((page) => {
                   const distance = Math.abs(page - currentPage);
@@ -694,15 +693,15 @@ export default function Notifications() {
                   return (
                     <React.Fragment key={page}>
                       {showEllipsis && (
-                        <span className='px-2 py-1 text-sm text-gray-500'>
+                        <span className="px-2 py-1 text-sm text-gray-500">
                           ...
                         </span>
                       )}
                       <Button
                         variant={currentPage === page ? "default" : "outline"}
-                        size='sm'
+                        size="sm"
                         onClick={() => setCurrentPage(page)}
-                        className='w-8 h-8 p-0'
+                        className="w-8 h-8 p-0"
                       >
                         {page}
                       </Button>
@@ -711,15 +710,14 @@ export default function Notifications() {
                 })}
             </div>
             <Button
-              variant='outline'
-              size='sm'
+              variant="outline"
+              size="sm"
               onClick={() =>
                 setCurrentPage((prev) => Math.min(totalPages, prev + 1))
               }
               disabled={currentPage === totalPages}
             >
-              
-              <ChevronRight className='w-4 h-4' />
+              <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
         </div>
@@ -731,8 +729,8 @@ export default function Notifications() {
         onClose={() => setIsModalOpen(false)}
         item={selectedNotification}
         columns={notificationColumns}
-        title='Notification Details'
-        description='Complete information about the selected notification'
+        title="Notification Details"
+        description="Complete information about the selected notification"
       />
     </div>
   );
