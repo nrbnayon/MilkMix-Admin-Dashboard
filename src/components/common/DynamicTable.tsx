@@ -710,7 +710,7 @@ export const DynamicTable: React.FC<DynamicTableProps> = ({
           <span className="text-sm text-blue-700 text-center sm:text-left">
             {selectedItems.length} item(s) selected
           </span>
-          <div className="flex flex-col xs:flex-row items-center gap-2">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-2">
             {onExport && (
               <Button
                 variant="outline"
@@ -721,7 +721,7 @@ export const DynamicTable: React.FC<DynamicTableProps> = ({
                   );
                   onExport(selectedData);
                 }}
-                className="w-full xs:w-auto"
+                className="w-full md:w-auto"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Export Selected
@@ -738,7 +738,7 @@ export const DynamicTable: React.FC<DynamicTableProps> = ({
                     itemName: `${selectedItems.length} selected items`,
                   });
                 }}
-                className="w-full xs:w-auto"
+                className="w-full md:w-auto"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete Selected
@@ -748,7 +748,7 @@ export const DynamicTable: React.FC<DynamicTableProps> = ({
               variant="outline"
               size="sm"
               onClick={() => setSelectedItems([])}
-              className="w-full xs:w-auto"
+              className="w-full md:w-auto"
             >
               Clear Selection
             </Button>
