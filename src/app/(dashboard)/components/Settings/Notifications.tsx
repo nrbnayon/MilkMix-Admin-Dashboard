@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   Bell,
   Trash2,
@@ -68,117 +68,123 @@ interface NotificationData extends GenericDataItem {
   };
 }
 
-// Mock data generator
-const generateMockNotifications = (): NotificationData[] => [
-  {
-    id: "1",
-    title: "New User Registration",
-    message: "John Doe has successfully registered to the platform",
-    type: "user",
-    isRead: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
-    updatedAt: new Date(Date.now() - 1000 * 60 * 5),
-    priority: "medium",
-    category: "User Management",
-    metadata: {
-      userId: "user_123",
-      userName: "John Doe",
-      userAvatar: "/placeholder.svg",
+// Fixed mock data with deterministic values
+const generateMockNotifications = (): NotificationData[] => {
+  // Use a fixed base date for consistent server/client rendering
+  const baseDate = new Date("2024-08-04T10:00:00Z");
+
+  const staticNotifications: NotificationData[] = [
+    {
+      id: "1",
+      title: "New User Registration",
+      message: "John Doe has successfully registered to the platform",
+      type: "user",
+      isRead: false,
+      createdAt: new Date(baseDate.getTime() - 1000 * 60 * 5), // 5 minutes ago
+      updatedAt: new Date(baseDate.getTime() - 1000 * 60 * 5),
+      priority: "medium",
+      category: "User Management",
+      metadata: {
+        userId: "user_123",
+        userName: "John Doe",
+        userAvatar: "/placeholder.svg",
+      },
     },
-  },
-  {
-    id: "2",
-    title: "Payment Received",
-    message:
-      "Payment of $299.99 has been successfully processed for Order #ORD-2024-001",
-    type: "payment",
-    isRead: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
-    updatedAt: new Date(Date.now() - 1000 * 60 * 15),
-    priority: "high",
-    category: "Financial",
-    metadata: {
-      amount: 299.99,
-      orderId: "ORD-2024-001",
-      userId: "user_456",
-      userName: "Sarah Johnson",
+    {
+      id: "2",
+      title: "Payment Received",
+      message:
+        "Payment of $299.99 has been successfully processed for Order #ORD-2024-001",
+      type: "payment",
+      isRead: false,
+      createdAt: new Date(baseDate.getTime() - 1000 * 60 * 15), // 15 minutes ago
+      updatedAt: new Date(baseDate.getTime() - 1000 * 60 * 15),
+      priority: "high",
+      category: "Financial",
+      metadata: {
+        amount: 299.99,
+        orderId: "ORD-2024-001",
+        userId: "user_456",
+        userName: "Sarah Johnson",
+      },
     },
-  },
-  {
-    id: "3",
-    title: "System Maintenance",
-    message:
-      "Scheduled maintenance will begin at 2:00 AM UTC. Expected downtime: 30 minutes",
-    type: "system",
-    isRead: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-    updatedAt: new Date(Date.now() - 1000 * 60 * 30),
-    priority: "urgent",
-    category: "System",
-    metadata: {
-      systemComponent: "Database Server",
+    {
+      id: "3",
+      title: "System Maintenance",
+      message:
+        "Scheduled maintenance will begin at 2:00 AM UTC. Expected downtime: 30 minutes",
+      type: "system",
+      isRead: true,
+      createdAt: new Date(baseDate.getTime() - 1000 * 60 * 60 * 2), // 2 hours ago
+      updatedAt: new Date(baseDate.getTime() - 1000 * 60 * 30),
+      priority: "urgent",
+      category: "System",
+      metadata: {
+        systemComponent: "Database Server",
+      },
     },
-  },
-  {
-    id: "4",
-    title: "Security Alert",
-    message: "Multiple failed login attempts detected from IP 192.168.1.100",
-    type: "warning",
-    isRead: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 1), // 1 hour ago
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 1),
-    priority: "urgent",
-    category: "Security",
-    metadata: {
-      ipAddress: "192.168.1.100",
-      attemptCount: 5,
+    {
+      id: "4",
+      title: "Security Alert",
+      message: "Multiple failed login attempts detected from IP 192.168.1.100",
+      type: "warning",
+      isRead: false,
+      createdAt: new Date(baseDate.getTime() - 1000 * 60 * 60 * 1), // 1 hour ago
+      updatedAt: new Date(baseDate.getTime() - 1000 * 60 * 60 * 1),
+      priority: "urgent",
+      category: "Security",
+      metadata: {
+        ipAddress: "192.168.1.100",
+        attemptCount: 5,
+      },
     },
-  },
-  {
-    id: "5",
-    title: "Data Backup Completed",
-    message:
-      "Daily backup process completed successfully. 1.2GB of data backed up.",
-    type: "success",
-    isRead: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6), // 6 hours ago
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 3),
-    priority: "low",
-    category: "System",
-    metadata: {
-      backupSize: "1.2GB",
-      backupLocation: "AWS S3",
+    {
+      id: "5",
+      title: "Data Backup Completed",
+      message:
+        "Daily backup process completed successfully. 1.2GB of data backed up.",
+      type: "success",
+      isRead: true,
+      createdAt: new Date(baseDate.getTime() - 1000 * 60 * 60 * 6), // 6 hours ago
+      updatedAt: new Date(baseDate.getTime() - 1000 * 60 * 60 * 3),
+      priority: "low",
+      category: "System",
+      metadata: {
+        backupSize: "1.2GB",
+        backupLocation: "AWS S3",
+      },
     },
-  },
-  {
-    id: "6",
-    title: "Profile Update Request",
-    message:
-      "User Emma Wilson has requested to update their profile information",
-    type: "info",
-    isRead: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12), // 12 hours ago
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 12),
-    priority: "medium",
-    category: "User Management",
-    metadata: {
-      userId: "user_789",
-      userName: "Emma Wilson",
-      userAvatar: "/placeholder.svg",
-      updateType: "Profile Information",
+    {
+      id: "6",
+      title: "Profile Update Request",
+      message:
+        "User Emma Wilson has requested to update their profile information",
+      type: "info",
+      isRead: false,
+      createdAt: new Date(baseDate.getTime() - 1000 * 60 * 60 * 12), // 12 hours ago
+      updatedAt: new Date(baseDate.getTime() - 1000 * 60 * 60 * 12),
+      priority: "medium",
+      category: "User Management",
+      metadata: {
+        userId: "user_789",
+        userName: "Emma Wilson",
+        userAvatar: "/placeholder.svg",
+        updateType: "Profile Information",
+      },
     },
-  },
-  // Adding more mock data to demonstrate pagination
-  ...Array.from({ length: 25 }, (_, i) => ({
+  ];
+
+  // Generate additional mock data with deterministic values
+  const additionalNotifications = Array.from({ length: 25 }, (_, i) => ({
     id: `${7 + i}`,
     title: `Sample Notification ${7 + i}`,
     message: `This is a sample notification message for item ${7 + i}`,
     type: ["info", "success", "warning", "error", "user", "system", "payment"][
       i % 7
     ] as NotificationData["type"],
-    isRead: Math.random() > 0.5,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * (i + 1)),
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * (i + 1)),
+    isRead: i % 3 === 0, // Deterministic pattern instead of Math.random()
+    createdAt: new Date(baseDate.getTime() - 1000 * 60 * 60 * (i + 1)),
+    updatedAt: new Date(baseDate.getTime() - 1000 * 60 * 60 * (i + 1)),
     priority: ["low", "medium", "high", "urgent"][
       i % 4
     ] as NotificationData["priority"],
@@ -187,8 +193,10 @@ const generateMockNotifications = (): NotificationData[] => [
       userId: `user_${7 + i}`,
       userName: `User ${7 + i}`,
     },
-  })),
-];
+  }));
+
+  return [...staticNotifications, ...additionalNotifications];
+};
 
 // Column configuration for ViewModal
 const notificationColumns: ColumnConfig[] = [
@@ -239,14 +247,19 @@ const notificationColumns: ColumnConfig[] = [
 ];
 
 export default function Notifications() {
-  const [notifications, setNotifications] = useState<NotificationData[]>(
-    generateMockNotifications()
-  );
+  const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [selectedNotification, setSelectedNotification] =
     useState<NotificationData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isClient, setIsClient] = useState(false);
   const itemsPerPage = 20;
+
+  // Initialize notifications only on client side
+  useEffect(() => {
+    setIsClient(true);
+    setNotifications(generateMockNotifications());
+  }, []);
 
   // Search and filter state
   const [searchFilterState, setSearchFilterState] = useState<SearchFilterState>(
@@ -362,6 +375,8 @@ export default function Notifications() {
 
   // Format time ago
   const formatTimeAgo = (date: Date) => {
+    if (!isClient) return "Loading..."; // Prevent hydration mismatch
+
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
     const diffInMinutes = Math.floor(diffInSeconds / 60);
@@ -499,11 +514,22 @@ export default function Notifications() {
   );
 
   // Reset to first page when filters change
-  React.useEffect(() => {
+  useEffect(() => {
     setCurrentPage(1);
   }, [searchFilterState]);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  // Show loading state during hydration
+  if (!isClient) {
+    return (
+      <div className="p-3 md:p-6">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-3 md:p-6">
