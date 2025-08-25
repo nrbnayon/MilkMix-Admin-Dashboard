@@ -136,6 +136,8 @@ export async function middleware(request: NextRequest) {
     ? authHeader.substring(7)
     : null;
 
+  console.log("Token from Cookie:", tokenFromCookie);
+  console.log("Token from Header:", tokenFromHeader);
   const token = tokenFromCookie || tokenFromHeader;
   const user = token ? await verifyToken(token) : null;
 
@@ -181,7 +183,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Handle OTP verification route
-  if (pathname === "/otp-verify") {
+  if (pathname === "//verify-otp") {
     // Allow access but could add additional checks here
     return response;
   }
