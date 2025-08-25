@@ -1,9 +1,9 @@
 // src/lib/auth/authGuard.tsx
-'use client';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import LoadingPing from '@/components/common/LoadingPing';
+"use client";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import LoadingPing from "@/components/common/LoadingPing";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -15,7 +15,7 @@ interface AuthGuardProps {
 export function AuthGuard({
   children,
   requireAuth = true,
-  redirectTo = '/login',
+  redirectTo = "/login",
   allowedRoles = [],
 }: AuthGuardProps) {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -30,15 +30,23 @@ export function AuthGuard({
     }
 
     if (allowedRoles.length > 0 && user && !allowedRoles.includes(user.role)) {
-      router.push('/unauthorized');
+      router.push("/unauthorized");
       return;
     }
 
     if (!requireAuth && isAuthenticated) {
-      router.push('/overview');
+      router.push("/overview");
       return;
     }
-  }, [isLoading, isAuthenticated, user, requireAuth, allowedRoles, router, redirectTo]);
+  }, [
+    isLoading,
+    isAuthenticated,
+    user,
+    requireAuth,
+    allowedRoles,
+    router,
+    redirectTo,
+  ]);
 
   if (isLoading) {
     return <LoadingPing />;

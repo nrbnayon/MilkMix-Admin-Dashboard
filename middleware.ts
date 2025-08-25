@@ -9,7 +9,7 @@ const AUTH_ROUTES = [
   "/reset-password",
   "/verify-otp",
 ];
-const PROTECTED_ROUTES = ["/dashboard", "/profile", "/settings"];
+const PROTECTED_ROUTES = ["/dashboard"]; //, "/profile", "/settings"
 const PUBLIC_ROUTES = ["/", "/about", "/contact", "/success"];
 
 // JWT secret - in production, use environment variable
@@ -48,76 +48,76 @@ function isRouteMatch(pathname: string, routes: string[]): boolean {
   });
 }
 
-function rateLimit(
-  ip: string,
-  limit: number = 100,
-  windowMs: number = 15 * 60 * 1000
-): boolean {
-  const now = Date.now();
-  const key = `${ip}-${Math.floor(now / windowMs)}`;
+// function rateLimit(
+//   ip: string,
+//   limit: number = 100,
+//   windowMs: number = 15 * 60 * 1000
+// ): boolean {
+//   const now = Date.now();
+//   const key = `${ip}-${Math.floor(now / windowMs)}`;
 
-  const current = rateLimitStore.get(key) || {
-    count: 0,
-    resetTime: now + windowMs,
-  };
+//   const current = rateLimitStore.get(key) || {
+//     count: 0,
+//     resetTime: now + windowMs,
+//   };
 
-  if (now > current.resetTime) {
-    current.count = 1;
-    current.resetTime = now + windowMs;
-  } else {
-    current.count++;
-  }
+//   if (now > current.resetTime) {
+//     current.count = 1;
+//     current.resetTime = now + windowMs;
+//   } else {
+//     current.count++;
+//   }
 
-  rateLimitStore.set(key, current);
+//   rateLimitStore.set(key, current);
 
-  // Clean up old entries
-  for (const [k, v] of rateLimitStore.entries()) {
-    if (now > v.resetTime) {
-      rateLimitStore.delete(k);
-    }
-  }
+//   // Clean up old entries
+//   for (const [k, v] of rateLimitStore.entries()) {
+//     if (now > v.resetTime) {
+//       rateLimitStore.delete(k);
+//     }
+//   }
 
-  return current.count <= limit;
-}
+//   return current.count <= limit;
+// }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const response = NextResponse.next();
 
   // Get client IP for rate limiting
-  const ip =
-    request.headers.get("x-forwarded-for") ||
-    request.headers.get("x-real-ip") ||
-    "unknown";
+  // const ip =
+  //   request.headers.get("x-forwarded-for") ||
+  //   request.headers.get("x-real-ip") ||
+  //   "unknown";
 
-  // Apply rate limiting
-  if (!rateLimit(ip)) {
-    return new NextResponse("Too Many Requests", {
-      status: 429,
-      headers: {
-        "Retry-After": "900", // 15 minutes
-        "X-RateLimit-Limit": "100",
-        "X-RateLimit-Remaining": "0",
-        "X-RateLimit-Reset": new Date(
-          Date.now() + 15 * 60 * 1000
-        ).toISOString(),
-      },
-    });
-  }
+  // // Apply rate limiting
+  // if (!rateLimit(ip)) {
+  //   return new NextResponse("Too Many Requests", {
+  //     status: 429,
+  //     headers: {
+  //       "Retry-After": "900", // 15 minutes
+  //       "X-RateLimit-Limit": "100",
+  //       "X-RateLimit-Remaining": "0",
+  //       "X-RateLimit-Reset": new Date(
+  //         Date.now() + 15 * 60 * 1000
+  //       ).toISOString(),
+  //     },
+  //   });
+  // }
 
-  // Security headers
-  response.headers.set("X-Frame-Options", "DENY");
-  response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set("Referrer-Policy", "origin-when-cross-origin");
-  response.headers.set("X-XSS-Protection", "1; mode=block");
-  response.headers.set(
-    "Strict-Transport-Security",
-    "max-age=31536000; includeSubDomains; preload"
-  );
-  response.headers.set(
-    "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; media-src 'self'; object-src 'none'; child-src 'none'; worker-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self';"
-  );
+  // // Security headers
+  // response.headers.set("X-Frame-Options", "DENY");
+  // response.headers.set("X-Content-Type-Options", "nosniff");
+  // response.headers.set("Referrer-Policy", "origin-when-cross-origin");
+  // response.headers.set("X-XSS-Protection", "1; mode=block");
+  // response.headers.set(
+  //   "Strict-Transport-Security",
+  //   "max-age=31536000; includeSubDomains; preload"
+  // );
+  // response.headers.set(
+  //   "Content-Security-Policy",
+  //   "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; media-src 'self'; object-src 'none'; child-src 'none'; worker-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self';"
+  // );
 
   // Skip middleware for static files and API routes that don't need protection
   if (

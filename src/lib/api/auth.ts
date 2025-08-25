@@ -1,6 +1,6 @@
 // src/lib/api/auth.ts
-import { apiClient } from './client';
-import { API_CONFIG } from './config';
+import { apiClient } from "./client";
+import { API_CONFIG } from "./config";
 import type {
   LoginRequest,
   LoginResponse,
@@ -13,7 +13,7 @@ import type {
   PasswordResetRequest,
   PasswordResetConfirmRequest,
   PasswordChangeRequest,
-} from '@/types/api';
+} from "@/types/api";
 
 export class AuthAPI {
   static async login(credentials: LoginRequest) {
@@ -22,14 +22,23 @@ export class AuthAPI {
       credentials,
       false // Don't include auth header for login
     );
-    
+
     if (response.success && response.data) {
-      // Store tokens
-      localStorage.setItem('auth-token', response.data.access);
-      localStorage.setItem('refresh-token', response.data.refresh);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      // Store tokens with correct property names
+      localStorage.setItem("auth-token", response.data.access_token);
+      localStorage.setItem("refresh-token", response.data.refresh_token);
+
+      // Create user object with all necessary properties
+      const userData = {
+        ...response.data,
+        id: response.data.profile?.user || response.data.profile?.id,
+        name: response.data.profile?.name,
+        email: credentials.email, // Add email from credentials
+      };
+
+      localStorage.setItem("user", JSON.stringify(userData));
     }
-    
+
     return response;
   }
 
@@ -47,11 +56,12 @@ export class AuthAPI {
 
   static async updateProfile(data: ProfileUpdateRequest) {
     const formData = new FormData();
-    
-    if (data.first_name) formData.append('first_name', data.first_name);
-    if (data.last_name) formData.append('last_name', data.last_name);
-    if (data.phone_number) formData.append('phone_number', data.phone_number);
-    if (data.profile_picture) formData.append('profile_picture', data.profile_picture);
+
+    if (data.first_name) formData.append("first_name", data.first_name);
+    if (data.last_name) formData.append("last_name", data.last_name);
+    if (data.phone_number) formData.append("phone_number", data.phone_number);
+    if (data.profile_picture)
+      formData.append("profile_picture", data.profile_picture);
 
     return apiClient.postFormData<User>(
       API_CONFIG.ENDPOINTS.AUTH.PROFILE,
@@ -64,19 +74,11 @@ export class AuthAPI {
   }
 
   static async createOTP(data: OTPRequest) {
-    return apiClient.post(
-      API_CONFIG.ENDPOINTS.AUTH.OTP_CREATE,
-      data,
-      false
-    );
+    return apiClient.post(API_CONFIG.ENDPOINTS.AUTH.OTP_CREATE, data, false);
   }
 
   static async verifyOTP(data: OTPVerifyRequest) {
-    return apiClient.post(
-      API_CONFIG.ENDPOINTS.AUTH.OTP_VERIFY,
-      data,
-      false
-    );
+    return apiClient.post(API_CONFIG.ENDPOINTS.AUTH.OTP_VERIFY, data, false);
   }
 
   static async requestPasswordReset(data: PasswordResetRequest) {
@@ -96,10 +98,7 @@ export class AuthAPI {
   }
 
   static async changePassword(data: PasswordChangeRequest) {
-    return apiClient.post(
-      API_CONFIG.ENDPOINTS.AUTH.PASSWORD_CHANGE,
-      data
-    );
+    return apiClient.post(API_CONFIG.ENDPOINTS.AUTH.PASSWORD_CHANGE, data);
   }
 
   static async verifyResetOTP(data: OTPVerifyRequest) {
@@ -111,24 +110,46 @@ export class AuthAPI {
   }
 
   static logout() {
-    localStorage.removeItem('auth-token');
-    localStorage.removeItem('refresh-token');
-    localStorage.removeItem('user');
-    window.location.href = '/login';
+    localStorage.removeItem("auth-token");
+    localStorage.removeItem("refresh-token");
+    localStorage.removeItem("user");
+    // Only redirect if we're in the browser
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
+    }
   }
 
   static getStoredUser(): User | null {
-    if (typeof window === 'undefined') return null;
-    const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : null;
+    if (typeof window === "undefined") return null;
+    try {
+      const userStr = localStorage.getItem("user");
+      return userStr ? JSON.parse(userStr) : null;
+    } catch (error) {
+      console.error("Error parsing stored user:", error);
+      return null;
+    }
   }
 
   static getStoredToken(): string | null {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('auth-token');
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("auth-token");
+  }
+
+  static getStoredRefreshToken(): string | null {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("refresh-token");
   }
 
   static isAuthenticated(): boolean {
     return !!this.getStoredToken();
+  }
+
+  static hasRole(requiredRole: string): boolean {
+    const user = this.getStoredUser();
+    return user?.role === requiredRole;
+  }
+
+  static isAdmin(): boolean {
+    return this.hasRole("admin");
   }
 }

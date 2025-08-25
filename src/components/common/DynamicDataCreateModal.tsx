@@ -479,8 +479,7 @@ export function DynamicDataCreateModal({
                           <Image
                             src={
                               imageUrl ||
-                              "/placeholder.svg?height=120&width=120&query=image" ||
-                              "/placeholder.svg"
+                              "" 
                             }
                             alt={`Preview ${index + 1}`}
                             width={120}
@@ -494,7 +493,7 @@ export function DynamicDataCreateModal({
                               // Fallback to placeholder if image fails to load
                               const target = e.target as HTMLImageElement;
                               target.src =
-                                "/placeholder.svg?height=120&width=120";
+                                "";
                             }}
                           />
                         </div>

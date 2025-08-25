@@ -1,6 +1,6 @@
-// src\app\(dashboard)\components\Subscription\UserSubscriptions.tsx
+// src/app/(dashboard)/components/Subscription/UserSubscriptions.tsx
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type {
   GenericDataItem,
   ColumnConfig,
@@ -8,11 +8,55 @@ import type {
   FilterConfig,
   ActionConfig,
   TableConfig,
-  EditModalConfig,
 } from "@/types/dynamicTableTypes";
 import { DynamicTable } from "@/components/common/DynamicTable";
 import Lordicon from "@/components/lordicon/lordicon-wrapper";
 import { useSubscriptions } from "@/hooks/useApi";
+import { getProfilePictureUrl } from "@/utils/imageUtils";
+
+// Type definitions
+interface UserProfile {
+  id: number;
+  user: number;
+  name: string;
+  profile_picture: string | null;
+  phone_number: string | null;
+  joined_date: string;
+}
+
+interface SubscriptionPlan {
+  id: number;
+  name: string;
+  amount: string;
+  description?: string;
+  features?: string[];
+}
+
+interface ApiUser {
+  id: number;
+  email: string;
+  role: "consultant" | "farm" | "farm_user";
+  is_verified: boolean;
+  user_profile: UserProfile;
+}
+
+interface SubscriptionData {
+  id: number;
+  user: ApiUser;
+  plan: SubscriptionPlan;
+  status: "active" | "inactive" | "blocked" | "pending" | "expired";
+  start_date: string;
+  end_date: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface SubscriptionsApiResponse {
+  data: SubscriptionData[];
+  status: number;
+  success: boolean;
+  message?: string;
+}
 
 interface UserManagementProps {
   itemsPerPage?: number;
@@ -21,35 +65,68 @@ interface UserManagementProps {
   pageUrl?: string;
 }
 
+interface TransformedUserData extends GenericDataItem {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+  status: string;
+  accountType: string;
+  subscription: string;
+  amount: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export default function UserSubscriptions({
   itemsPerPage = 10,
   title = "Subscription user list",
   buttonText = "Show all",
   pageUrl = "/users-subscription",
 }: UserManagementProps) {
-  const { data: subscriptionsResponse, isLoading, refetch } = useSubscriptions();
-  const [users, setUsers] = useState<GenericDataItem[]>([]);
+  const {
+    data: subscriptionsResponse,
+    isLoading,
+    refetch,
+  } = useSubscriptions() as {
+    data: SubscriptionsApiResponse | undefined;
+    isLoading: boolean;
+    refetch: () => void;
+  };
+
+  const [users, setUsers] = useState<TransformedUserData[]>([]);
 
   // Transform API data to match component expectations
-  React.useEffect(() => {
+  useEffect(() => {
     if (subscriptionsResponse?.success && subscriptionsResponse.data) {
-      const transformedUsers = subscriptionsResponse.data.map((subscription) => ({
-        id: subscription.id.toString(),
-        name: `User ${subscription.user}`,
-        email: `user${subscription.user}@example.com`,
-        avatar: '',
-        status: subscription.status,
-        accountType: subscription.plan_name.toLowerCase(),
-        subscription: subscription.plan_name,
-        amount: subscription.amount,
-        startDate: subscription.start_date,
-        endDate: subscription.end_date,
-        isActive: subscription.status === 'active',
-        createdAt: subscription.start_date,
-      }));
-      setUsers(transformedUsers as GenericDataItem[]);
+      const transformedUsers: TransformedUserData[] =
+        subscriptionsResponse.data.map((subscription: SubscriptionData) => ({
+          id: subscription.id.toString(),
+          name:
+            subscription.user?.user_profile?.name ||
+            `User ${subscription.user?.id || "Unknown"}`,
+          email: subscription.user?.email || "No email provided",
+          avatar: getProfilePictureUrl(
+            subscription.user?.user_profile?.profile_picture
+          ),
+          status: subscription.status,
+          accountType:
+            subscription.plan?.name?.toLowerCase().replace(/\s+/g, "") ||
+            "unknown",
+          subscription: subscription.plan?.name || "Unknown Plan",
+          amount: subscription.plan?.amount || "0.00",
+          startDate: subscription.start_date,
+          endDate: subscription.end_date,
+          isActive: subscription.status === "active",
+          createdAt: subscription.start_date,
+        }));
+      setUsers(transformedUsers);
     }
   }, [subscriptionsResponse]);
+
+  console.log("All subscriptionsResponse Users:", subscriptionsResponse);
 
   // Column Configuration for User Table
   const userColumns: ColumnConfig[] = [
@@ -60,7 +137,7 @@ export default function UserSubscriptions({
       searchable: true,
       showAvatar: true,
       align: "left",
-      width: "100px",
+      width: "200px",
     },
     {
       key: "email",
@@ -68,7 +145,7 @@ export default function UserSubscriptions({
       type: "email",
       sortable: true,
       searchable: true,
-      width: "100px",
+      width: "250px",
     },
     {
       key: "status",
@@ -76,29 +153,54 @@ export default function UserSubscriptions({
       type: "select",
       sortable: true,
       filterable: true,
-      width: "100px",
+      width: "120px",
       align: "center",
       options: [
         { value: "active", label: "Active", color: "#16a34a" },
         { value: "inactive", label: "Inactive", color: "#ca8a04" },
         { value: "blocked", label: "Blocked", color: "#dc2626" },
         { value: "pending", label: "Pending", color: "#6b7280" },
+        { value: "expired", label: "Expired", color: "#ef4444" },
       ],
     },
     {
       key: "accountType",
-      label: "Subscription Status",
+      label: "Subscription Plan",
       type: "select",
       sortable: true,
       filterable: true,
-      width: "100px",
+      width: "180px",
       align: "center",
       options: [
-        { value: "free", label: "Free Plan", color: "#9ca3af" },
-        { value: "personal", label: "Personal Plan", color: "#10b981" },
-        { value: "enterprise", label: "Enterprise Plan", color: "#1e40af" },
-        { value: "consultant", label: "Consultant Plan", color: "#f59e0b" },
+        { value: "freeplan", label: "Free Plan", color: "#9ca3af" },
+        { value: "personalplan", label: "Personal Plan", color: "#10b981" },
+        { value: "enterpriseplan", label: "Enterprise Plan", color: "#1e40af" },
+        { value: "consultantplan", label: "Consultant Plan", color: "#f59e0b" },
       ],
+    },
+    {
+      key: "amount",
+      label: "Amount",
+      type: "currency",
+      sortable: true,
+      width: "100px",
+      align: "right",
+    },
+    {
+      key: "startDate",
+      label: "Start Date",
+      type: "date",
+      sortable: true,
+      width: "120px",
+      align: "center",
+    },
+    {
+      key: "endDate",
+      label: "End Date",
+      type: "date",
+      sortable: true,
+      width: "120px",
+      align: "center",
     },
   ];
 
@@ -211,6 +313,7 @@ export default function UserSubscriptions({
         { value: "Australia", label: "Australia" },
         { value: "Germany", label: "Germany" },
         { value: "France", label: "France" },
+        { value: "Bangladesh", label: "Bangladesh" },
         { value: "Other", label: "Other" },
       ],
     },
@@ -227,22 +330,23 @@ export default function UserSubscriptions({
         { value: "inactive", label: "Inactive" },
         { value: "blocked", label: "Blocked" },
         { value: "pending", label: "Pending" },
+        { value: "expired", label: "Expired" },
       ],
     },
-    // {
-    //   key: "accountType",
-    //   label: "User Subscription Status",
-    //   type: "select",
-    //   required: true,
-    //   section: "account",
-    //   gridCol: "half",
-    //   options: [
-    //    { value: "free", label: "Free Plan", color: "#9ca3af" },
-    // { value: "personal", label: "Personal Plan", color: "#10b981" },
-    // { value: "enterprise", label: "Enterprise Plan", color: "#1e40af" },
-    // { value: "consultant", label: "Consultant Plan", color: "#f59e0b" },
-    // //   ],
-    // },
+    {
+      key: "accountType",
+      label: "Subscription Plan",
+      type: "select",
+      required: true,
+      section: "account",
+      gridCol: "half",
+      options: [
+        { value: "freeplan", label: "Free Plan" },
+        { value: "personalplan", label: "Personal Plan" },
+        { value: "enterpriseplan", label: "Enterprise Plan" },
+        { value: "consultantplan", label: "Consultant Plan" },
+      ],
+    },
   ];
 
   // Filter Configuration for User Table
@@ -256,17 +360,18 @@ export default function UserSubscriptions({
         { value: "inactive", label: "Inactive" },
         { value: "blocked", label: "Blocked" },
         { value: "pending", label: "Pending" },
+        { value: "expired", label: "Expired" },
       ],
     },
     {
       key: "accountType",
-      label: "Subscriptions",
+      label: "Subscription Plan",
       type: "select",
       options: [
-        { value: "free", label: "Free Plan", color: "#9ca3af" },
-        { value: "personal", label: "Personal Plan", color: "#10b981" },
-        { value: "enterprise", label: "Enterprise Plan", color: "#1e40af" },
-        { value: "consultant", label: "Consultant Plan", color: "#f59e0b" },
+        { value: "freeplan", label: "Free Plan" },
+        { value: "personalplan", label: "Personal Plan" },
+        { value: "enterpriseplan", label: "Enterprise Plan" },
+        { value: "consultantplan", label: "Consultant Plan" },
       ],
     },
   ];
@@ -289,33 +394,39 @@ export default function UserSubscriptions({
         />
       ),
       variant: "ghost",
-      onClick: (item) => console.log("View user:", item.name),
+      onClick: (item: GenericDataItem) => {
+        console.log("View user:", item.name);
+        // Add your view logic here
+      },
     },
-    {
-      key: "edit",
-      label: "Edit",
-      icon: (
-        <Lordicon
-          src="https://cdn.lordicon.com/cbtlerlm.json"
-          trigger="hover"
-          size={20}
-          colors={{
-            primary: "",
-            secondary: "",
-          }}
-          stroke={4}
-        />
-      ),
-      variant: "ghost",
-      onClick: (item) => console.log("Edit user:", item.name),
-    },
+    // {
+    //   key: "edit",
+    //   label: "",
+    //   icon: (
+    //     <Lordicon
+    //       src="https://cdn.lordicon.com/gwlusjdu.json"
+    //       trigger="hover"
+    //       size={20}
+    //       colors={{
+    //         primary: "#4f46e5",
+    //         secondary: "",
+    //       }}
+    //       stroke={4}
+    //     />
+    //   ),
+    //   variant: "ghost",
+    //   onClick: (item: GenericDataItem) => {
+    //     console.log("Edit user:", item.name);
+    //     // Add your edit logic here
+    //   },
+    // },
   ];
 
   // Table Configuration for User Management
   const userTableConfig: TableConfig = {
     title: title,
-    description: "",
-    searchPlaceholder: "Search users by name, email, or department...",
+    description: "Manage user subscriptions and their status",
+    searchPlaceholder: "Search users by name, email, or subscription plan...",
     itemsPerPage: itemsPerPage,
     enableSearch: true,
     enableFilters: true,
@@ -323,61 +434,25 @@ export default function UserSubscriptions({
     enableSelection: true,
     enableSorting: true,
     striped: true,
-    emptyMessage: "No users found",
-    loadingMessage: "Loading users...",
-  };
-
-  // Edit Modal Configuration for User Form
-  const userEditModalConfig: EditModalConfig = {
-    title: "Edit User",
-    description: "Update user information and settings",
-    width: "xl",
-    sections: [
-      {
-        key: "personal",
-        title: "Personal Information",
-        description: "Basic personal details and contact information",
-      },
-      {
-        key: "address",
-        title: "Address Information",
-        description: "Location and address details",
-      },
-      {
-        key: "professional",
-        title: "Professional Information",
-        description: "Job-related details and organizational information",
-      },
-      {
-        key: "account",
-        title: "Account & Access",
-        description: "Account status, permissions, and security settings",
-      },
-    ],
+    emptyMessage: "No subscription users found",
+    loadingMessage: "Loading subscription users...",
   };
 
   const handleDataChange = (newData: GenericDataItem[]) => {
-    setUsers(newData);
+    setUsers(newData as TransformedUserData[]);
     console.log("Users data changed:", newData);
-  };
-
-  const handleUserEdit = (user: GenericDataItem) => {
-    console.log("User edited:", user);
-    // Here you would typically make an API call to update the user
-  };
-
-  const handleUserDelete = (userId: string) => {
-    console.log("User deleted:", userId);
-    // Here you would typically make an API call to delete the user
   };
 
   const handleUsersSelect = (selectedIds: string[]) => {
     console.log("Selected users:", selectedIds);
-    // Handle bulk operations
+    const selectedUsers = users.filter((user) => selectedIds.includes(user.id));
+    console.log("Selected user objects:", selectedUsers);
+    // Handle bulk operations like bulk status update, export, etc.
   };
 
   const handleExport = (exportData: GenericDataItem[]) => {
     console.log("Exporting users:", exportData);
+
     // Convert data to CSV format
     const headers = userColumns.map((col) => col.label).join(",");
     const csvData = exportData
@@ -397,11 +472,13 @@ export default function UserSubscriptions({
     const csv = `${headers}\n${csvData}`;
 
     // Create and download file
-    const blob = new Blob([csv], { type: "text/csv" });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `users-export-${new Date().toISOString().split("T")[0]}.csv`;
+    a.download = `subscription-users-export-${
+      new Date().toISOString().split("T")[0]
+    }.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -409,6 +486,7 @@ export default function UserSubscriptions({
   };
 
   const handleRefresh = () => {
+    console.log("Refreshing subscription data...");
     refetch();
   };
 
@@ -421,10 +499,9 @@ export default function UserSubscriptions({
         filters={userFilters}
         actions={userActions}
         tableConfig={userTableConfig}
-        editModalConfig={userEditModalConfig}
         onDataChange={handleDataChange}
-        onItemEdit={handleUserEdit}
-        onItemDelete={handleUserDelete}
+        isDataEditable={false}
+        isDataDeletable={false}
         onItemsSelect={handleUsersSelect}
         onExport={handleExport}
         onRefresh={handleRefresh}

@@ -1,18 +1,32 @@
+// src/components/dashboard/dashboard-header.tsx
+"use client";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { cn } from "@/lib/utils";
 import Lordicon from "@/components/lordicon/lordicon-wrapper";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 
+type UserProfile = {
+  name?: string;
+  // add other fields if needed
+};
+
+type User = {
+  user_profile?: UserProfile;
+  // add other fields if needed
+};
+
 export default function DashboardHeader({
   title = "Welcome",
-  subtitle=''
+  subtitle = "",
 }: {
   title?: string;
   subtitle?: string;
 }) {
-  const { user } = useAuth();
-  
+  const { user } = useAuth() as { user?: User };
+
+  console.log("DashboardHeader user:", user);
+
   return (
     <header
       className={cn(
@@ -23,12 +37,10 @@ export default function DashboardHeader({
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl md:text-3xl font-bold tracking-tight">
-              {user ? `Welcome ${user.name}` : title}
+              {user ? `Welcome ${user.user_profile?.name}` : title}
             </h1>
             {subtitle && (
-              <h3 className="text-sm md:text-base font-medium">
-                {subtitle}
-              </h3>
+              <h3 className="text-sm md:text-base font-medium">{subtitle}</h3>
             )}
           </div>
           {/* Mobile Navigation */}

@@ -3,7 +3,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  role: 'admin' | 'consultant' | 'farm' | 'member';
+  role: "admin" | "consultant" | "farm" | "member" | "farm_user" | "viewer";
   first_name?: string;
   last_name?: string;
   phone_number?: string;
@@ -11,6 +11,7 @@ export interface User {
   is_active?: boolean;
   date_joined?: string;
   last_login?: string;
+  [key: string]: unknown;
 }
 
 export interface LoginRequest {
@@ -22,14 +23,20 @@ export interface LoginResponse {
   access: string;
   refresh: string;
   user: User;
+  profile: User;
   message?: string;
+  data: User;
+  refresh_token: string;
+  access_token: string;
+  [key: string]: unknown;
 }
 
 export interface RegisterRequest {
   name: string;
   email: string;
   password: string;
-  role: 'consultant' | 'farm' | 'member';
+  role: "consultant" | "farm" | "member";
+  [key: string]: unknown;
 }
 
 export interface RegisterResponse {
@@ -111,7 +118,7 @@ export interface ConsultantRequest {
 }
 
 export interface RequestManageRequest {
-  action: 'accept' | 'reject';
+  action: "accept" | "reject";
 }
 
 export interface Notification {
@@ -127,7 +134,7 @@ export interface Subscription {
   id: number;
   user: number;
   plan_name: string;
-  status: 'active' | 'inactive' | 'cancelled';
+  status: "active" | "inactive" | "cancelled";
   start_date: string;
   end_date: string;
   amount: number;

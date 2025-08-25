@@ -22,7 +22,7 @@ export interface UserDataItem extends GenericDataItem {
   country?: string;
   zipCode?: string;
   // Professional Information
-  role: "admin" | "manager" | "editor" | "user" | "viewer";
+  role: "admin" | "manager" | "editor" | "user" | "viewer" | "farm_user";
   department: string;
   position?: string;
   employeeId?: string;

@@ -49,7 +49,7 @@ export default function ManagementPosts({
               src={
                 typeof item.image === "string" && item.image.trim() !== ""
                   ? item.image
-                  : "/placeholder.svg?height=48&width=48"
+                  : ""
               }
               alt={String(value)}
               className="w-full h-full object-cover"

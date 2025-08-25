@@ -39,13 +39,19 @@ export default function LoginForm() {
   const rememberMe = watch("rememberMe");
 
   const onSubmit = async (data: LoginFormData) => {
-    const success = await login({
-      email: data.email,
-      password: data.password,
-    });
+    try {
+      const success = await login({
+        email: data.email,
+        password: data.password,
+      });
 
-    if (success) {
-      router.push("/overview");
+      if (success) {
+        // Redirect based on role or default to overview
+        router.push("/overview");
+        router.refresh(); // Force refresh to update server-side components
+      }
+    } catch (error) {
+      console.error("Login submission error:", error);
     }
   };
 
@@ -79,6 +85,7 @@ export default function LoginForm() {
               variant="outline"
               onClick={handleDemoLogin}
               className="bg-white/10 border-white/20 hover:text-white hover:bg-white/20 w-full backdrop-blur-sm text-sm sm:text-base"
+              disabled={isLoading}
             >
               Try Demo Login
             </Button>
@@ -119,7 +126,7 @@ export default function LoginForm() {
                         : "input-focus"
                     }`}
                     {...register("email")}
-                    disabled={isLoading}
+                    disabled={isLoading || isSubmitting}
                   />
                   <User className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                 </div>
@@ -149,13 +156,13 @@ export default function LoginForm() {
                         : "input-focus"
                     }`}
                     {...register("password")}
-                    disabled={isLoading}
+                    disabled={isLoading || isSubmitting}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 hover:text-primary transition-colors"
-                    disabled={isLoading}
+                    disabled={isLoading || isSubmitting}
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
@@ -181,7 +188,7 @@ export default function LoginForm() {
                     onCheckedChange={(checked) =>
                       setValue("rememberMe", !!checked)
                     }
-                    disabled={isLoading}
+                    disabled={isLoading || isSubmitting}
                   />
                   <label
                     htmlFor="rememberMe"
@@ -204,7 +211,7 @@ export default function LoginForm() {
                 className="w-full h-10 sm:h-12 bg-primary/80 hover:bg-primary text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-indigo-500/20 text-sm sm:text-base"
                 disabled={isLoading || isSubmitting}
               >
-                {isLoading ? (
+                {isLoading || isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Signing in...

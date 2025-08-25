@@ -1,15 +1,15 @@
 // src/contexts/AuthContext.tsx
-'use client';
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { AuthAPI } from '@/lib/api/auth';
-import type { User, LoginRequest, RegisterRequest } from '@/types/api';
-import { toast } from 'sonner';
+"use client";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { AuthAPI } from "@/lib/api/auth";
+import type { User, LoginRequest, RegisterRequest } from "@/types/api";
+import { toast } from "sonner";
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   login: (credentials: LoginRequest) => Promise<boolean>;
   register: (userData: RegisterRequest) => Promise<boolean>;
   logout: () => void;
@@ -22,9 +22,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
 
   const isAuthenticated = !!user && !!AuthAPI.getStoredToken();
+  const isAdmin = user?.role === "admin";
 
   // Initialize auth state
   useEffect(() => {
@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        console.error("Auth initialization error:", error);
         AuthAPI.logout();
       } finally {
         setIsLoading(false);
@@ -58,23 +58,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       const response = await AuthAPI.login(credentials);
-      
+
+      console.log("Login response:", response.data);
       if (response.success && response.data) {
-        setUser(response.data.user);
-        toast.success('Login successful!', {
-          description: `Welcome back, ${response.data.user.name}!`,
+        setUser(response.data.profile || response.data);
+        toast.success("Login successful!", {
+          description: `Welcome back, ${response.data?.profile?.name}!`,
         });
         return true;
       } else {
-        toast.error('Login failed', {
-          description: response.error || 'Invalid credentials',
+        toast.error("Login failed", {
+          description: response.error || "Invalid credentials",
         });
         return false;
       }
     } catch (error) {
-      console.error('Login error:', error);
-      toast.error('Login failed', {
-        description: error instanceof Error ? error.message : 'Network error',
+      console.error("Login error:", error);
+      toast.error("Login failed", {
+        description: error instanceof Error ? error.message : "Network error",
       });
       return false;
     } finally {
@@ -86,22 +87,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       const response = await AuthAPI.register(userData);
-      
+
       if (response.success) {
-        toast.success('Registration successful!', {
-          description: 'Please check your email to verify your account.',
+        toast.success("Registration successful!", {
+          description: "Please check your email to verify your account.",
         });
         return true;
       } else {
-        toast.error('Registration failed', {
-          description: response.error || 'Please try again',
+        toast.error("Registration failed", {
+          description: response.error || "Please try again",
         });
         return false;
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      toast.error('Registration failed', {
-        description: error instanceof Error ? error.message : 'Network error',
+      console.error("Registration error:", error);
+      toast.error("Registration failed", {
+        description: error instanceof Error ? error.message : "Network error",
       });
       return false;
     } finally {
@@ -112,14 +113,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setUser(null);
     AuthAPI.logout();
-    toast.info('Logged out successfully');
+    toast.info("Logged out successfully");
   };
 
   const updateUser = (userData: Partial<User>) => {
     if (user) {
       const updatedUser = { ...user, ...userData };
       setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+      localStorage.setItem("user", JSON.stringify(updatedUser));
     }
   };
 
@@ -128,10 +129,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const response = await AuthAPI.getProfile();
       if (response.success && response.data) {
         setUser(response.data);
-        localStorage.setItem('user', JSON.stringify(response.data));
+        localStorage.setItem("user", JSON.stringify(response.data));
       }
     } catch (error) {
-      console.error('Failed to refresh user:', error);
+      console.error("Failed to refresh user:", error);
     }
   };
 
@@ -139,6 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     isLoading,
     isAuthenticated,
+    isAdmin,
     login,
     register,
     logout,
@@ -152,7 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }
