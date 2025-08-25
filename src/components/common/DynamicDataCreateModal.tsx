@@ -75,6 +75,11 @@ export function DynamicDataCreateModal({
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
+  // FIXED: Track original images vs new uploads
+  const [originalImages, setOriginalImages] = useState<
+    Record<string, string[]>
+  >({});
+
   // Handle input change
   const handleInputChange = useCallback(
     (key: string, value: unknown) => {
@@ -86,8 +91,6 @@ export function DynamicDataCreateModal({
     },
     [errors]
   );
-
-  // console.log("Form Data:", initialData);
 
   // Handle drag events for image upload
   const handleDrag = useCallback((e: React.DragEvent, fieldKey: string) => {
@@ -162,7 +165,7 @@ export function DynamicDataCreateModal({
     [formData, maxImageUpload]
   );
 
-  // Validate and process image file
+  // FIXED: Validate and process image file - store as File objects for new uploads
   const handleImageFile = useCallback(
     (file: File, fieldKey: string) => {
       // Validate file type
@@ -187,10 +190,12 @@ export function DynamicDataCreateModal({
 
       setUploading((prev) => ({ ...prev, [fieldKey]: true }));
 
-      // Create preview
+      // For new uploads, create a preview URL and store the File object
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
+
+        // Store the base64 data URL for preview, but we'll send the File object to the parent
         setFormData((prev) => {
           const currentImages = Array.isArray(prev[fieldKey])
             ? (prev[fieldKey] as string[])
@@ -244,7 +249,7 @@ export function DynamicDataCreateModal({
     fileInputRefs.current[fieldKey]?.click();
   }, []);
 
-  // Validate form
+  // FIXED: Enhanced form validation
   const validateForm = useCallback(() => {
     const newErrors: Record<string, string> = {};
 
@@ -255,7 +260,10 @@ export function DynamicDataCreateModal({
       if (field.required) {
         if (field.type === "image") {
           const images = Array.isArray(value) ? value : value ? [value] : [];
-          if (images.length === 0) {
+          const originalImagesForField = originalImages[field.key] || [];
+
+          // Check if we have either original images or new uploads
+          if (images.length === 0 && originalImagesForField.length === 0) {
             newErrors[field.key] = `${field.label} is required`;
             return;
           }
@@ -301,16 +309,29 @@ export function DynamicDataCreateModal({
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [fields, formData]);
+  }, [fields, formData, originalImages]);
 
-  // Handle save
+  // FIXED: Handle save with proper image data
   const handleSave = useCallback(() => {
     if (validateForm()) {
-      onSave(formData);
-      handleClose();
+      // Transform formData to send the correct image data
+      const transformedData = { ...formData };
+
+      // For image fields, send the base64 data or maintain original URLs
+      fields.forEach((field) => {
+        if (field.type === "image" && formData[field.key]) {
+          const images = Array.isArray(formData[field.key])
+            ? (formData[field.key] as string[])
+            : [formData[field.key] as string];
+
+          // Send the images array (base64 for new uploads, URLs for existing)
+          transformedData[field.key] = images;
+        }
+      });
+
+      onSave(transformedData);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData, validateForm, onSave]);
+  }, [formData, validateForm, onSave, fields]);
 
   // Handle close
   const handleClose = useCallback(() => {
@@ -318,6 +339,7 @@ export function DynamicDataCreateModal({
     setErrors({});
     setDragActive({});
     setUploading({});
+    setOriginalImages({});
     // Clear file inputs
     Object.values(fileInputRefs.current).forEach((input) => {
       if (input) input.value = "";
@@ -339,6 +361,11 @@ export function DynamicDataCreateModal({
     return isNaN(parsed) ? 0 : parsed;
   };
 
+  // FIXED: Check if an image URL is a base64 data URL or a regular URL
+  const isBase64DataURL = (url: string): boolean => {
+    return url.startsWith("data:image/");
+  };
+
   // Render field based on type
   const renderField = useCallback(
     (field: FormField) => {
@@ -352,11 +379,12 @@ export function DynamicDataCreateModal({
         case "email":
         case "tel":
         case "date":
+        case "datetime-local":
         case "password":
         case "url":
           return (
             <Input
-              type={field.type === "url" ? "text" : field.type} // Map 'url' to 'text' input
+              type={field.type === "url" ? "text" : field.type}
               value={getStringValue(value)}
               onChange={(e) => handleInputChange(field.key, e.target.value)}
               placeholder={field.placeholder}
@@ -371,7 +399,7 @@ export function DynamicDataCreateModal({
         case "number":
           return (
             <Input
-              type="number"
+              type='number'
               value={getNumberValue(value)}
               onChange={(e) =>
                 handleInputChange(field.key, Number(e.target.value))
@@ -392,10 +420,10 @@ export function DynamicDataCreateModal({
             <MDEditor
               value={getStringValue(value)}
               onChange={(val) => handleInputChange(field.key, val || "")}
-              preview="edit"
+              preview='edit'
               hideToolbar={false}
               visibleDragbar={false}
-              data-color-mode="light"
+              data-color-mode='light'
               textareaProps={{
                 placeholder:
                   field.placeholder ||
@@ -442,78 +470,138 @@ export function DynamicDataCreateModal({
           );
 
         case "image":
-          // FIXED: Properly handle existing images and new uploads
-          const existingImages = Array.isArray(value)
+          // FIXED: Better handling of existing vs new images
+          const currentImages = Array.isArray(value)
             ? (value as string[])
             : value && typeof value === "string" && value.trim() !== ""
             ? [value as string]
             : [];
 
-          const canUploadMore = existingImages.length < maxImageUpload;
+          const originalImagesForField = originalImages[field.key] || [];
+          const totalImages = [
+            ...originalImagesForField,
+            ...currentImages.filter((img) => isBase64DataURL(img)),
+          ];
+          const canUploadMore = totalImages.length < maxImageUpload;
 
           return (
-            <div className="space-y-4">
-              {/* Image Previews - FIXED: Better handling of existing images */}
-              {existingImages.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-gray-700">
-                      {existingImages.length === 1
+            <div className='space-y-4'>
+              {/* Image Previews */}
+              {totalImages.length > 0 && (
+                <div className='space-y-3'>
+                  <div className='flex items-center justify-between'>
+                    <p className='text-sm font-medium text-gray-700'>
+                      {totalImages.length === 1
                         ? "Current Image"
-                        : `Images (${existingImages.length}/${maxImageUpload})`}
+                        : `Images (${totalImages.length}/${maxImageUpload})`}
                     </p>
-                    {existingImages.length > 1 && (
+                    {totalImages.length > 1 && (
                       <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleRemoveImage(field.key)}
-                        className="text-xs h-7"
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        onClick={() => {
+                          handleRemoveImage(field.key);
+                          setOriginalImages((prev) => ({
+                            ...prev,
+                            [field.key]: [],
+                          }));
+                        }}
+                        className='text-xs h-7'
                       >
                         Clear All
                       </Button>
                     )}
                   </div>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 p-4 bg-gray-50/50 rounded-lg border">
-                    {existingImages.map((imageUrl, index) => (
-                      <div key={index} className="relative group">
-                        <div className="aspect-square rounded-lg overflow-hidden border-2 border-white shadow-sm bg-white hover:shadow-md transition-shadow">
+                  <div className='grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 p-4 bg-gray-50/50 rounded-lg border'>
+                    {/* Show original images first */}
+                    {originalImagesForField.map((imageUrl, index) => (
+                      <div key={`original-${index}`} className='relative group'>
+                        <div className='aspect-square rounded-lg overflow-hidden border-2 border-blue-200 shadow-sm bg-white hover:shadow-md transition-shadow'>
                           <Image
-                            src={imageUrl || ""}
-                            alt={`Preview ${index + 1}`}
+                            src={imageUrl}
+                            alt={`Original ${index + 1}`}
                             width={120}
                             height={120}
-                            className="w-full h-full object-cover"
-                            unoptimized={
-                              imageUrl?.startsWith("data:") ||
-                              imageUrl?.startsWith("blob:")
-                            }
-                            onError={(e) => {
-                              // Fallback to placeholder if image fails to load
-                              const target = e.target as HTMLImageElement;
-                              target.src = "";
-                            }}
+                            className='w-full h-full object-cover'
                           />
+                          <div className='absolute top-1 left-1 bg-blue-500 text-white text-xs px-1 rounded'>
+                            Original
+                          </div>
                         </div>
                         <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                          type='button'
+                          variant='destructive'
+                          size='sm'
+                          className='absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg'
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleRemoveImage(field.key, index);
+                            setOriginalImages((prev) => ({
+                              ...prev,
+                              [field.key]:
+                                prev[field.key]?.filter(
+                                  (_, i) => i !== index
+                                ) || [],
+                            }));
                           }}
                         >
-                          <X className="h-2.5 w-2.5" />
+                          <X className='h-2.5 w-2.5' />
                         </Button>
                       </div>
                     ))}
+
+                    {/* Show new uploaded images */}
+                    {currentImages
+                      .filter((img) => isBase64DataURL(img))
+                      .map((imageUrl, index) => (
+                        <div key={`new-${index}`} className='relative group'>
+                          <div className='aspect-square rounded-lg overflow-hidden border-2 border-green-200 shadow-sm bg-white hover:shadow-md transition-shadow'>
+                            <Image
+                              src={imageUrl}
+                              alt={`New ${index + 1}`}
+                              width={120}
+                              height={120}
+                              className='w-full h-full object-cover'
+                              unoptimized
+                            />
+                            <div className='absolute top-1 left-1 bg-green-500 text-white text-xs px-1 rounded'>
+                              New
+                            </div>
+                          </div>
+                          <Button
+                            type='button'
+                            variant='destructive'
+                            size='sm'
+                            className='absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg'
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const newImageIndex = currentImages
+                                .filter((img) => isBase64DataURL(img))
+                                .indexOf(imageUrl);
+                              const allCurrentImages = currentImages.filter(
+                                (img) => isBase64DataURL(img)
+                              );
+                              const updatedImages = allCurrentImages.filter(
+                                (_, i) => i !== newImageIndex
+                              );
+                              const existingNonBase64 = currentImages.filter(
+                                (img) => !isBase64DataURL(img)
+                              );
+                              handleInputChange(field.key, [
+                                ...existingNonBase64,
+                                ...updatedImages,
+                              ]);
+                            }}
+                          >
+                            <X className='h-2.5 w-2.5' />
+                          </Button>
+                        </div>
+                      ))}
                   </div>
                 </div>
               )}
 
-              {/* Upload Area - FIXED: Better conditional rendering */}
+              {/* Upload Area */}
               {canUploadMore && (
                 <div
                   className={cn(
@@ -535,45 +623,43 @@ export function DynamicDataCreateModal({
                     ref={(el) => {
                       fileInputRefs.current[field.key] = el;
                     }}
-                    type="file"
+                    type='file'
                     accept={acceptedImageFormats.join(",")}
                     multiple={maxImageUpload > 1}
                     onChange={(e) => handleFileChange(e, field.key)}
-                    className="hidden"
+                    className='hidden'
                   />
-                  <div className="p-8 text-center">
-                    <div className="space-y-3">
-                      {/* Icon */}
-                      <div className="mx-auto w-12 h-12 text-gray-400">
+                  <div className='p-8 text-center'>
+                    <div className='space-y-3'>
+                      <div className='mx-auto w-12 h-12 text-gray-400'>
                         {isUploading ? (
-                          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-primary'></div>
                         ) : (
-                          <Upload className="w-12 h-12" />
+                          <Upload className='w-12 h-12' />
                         )}
                       </div>
-                      {/* Text */}
-                      <div className="space-y-1">
-                        <p className="text-base font-medium text-gray-900">
+                      <div className='space-y-1'>
+                        <p className='text-base font-medium text-gray-900'>
                           {isUploading
                             ? "Processing images..."
-                            : existingImages.length > 0
+                            : totalImages.length > 0
                             ? "Replace or add more images"
                             : "Upload images"}
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className='text-sm text-gray-600'>
                           Drop files here or{" "}
-                          <span className="text-primary font-medium">
+                          <span className='text-primary font-medium'>
                             browse
                           </span>
                         </p>
-                        <p className="text-xs text-gray-500 mt-2">
+                        <p className='text-xs text-gray-500 mt-2'>
                           {acceptedImageFormats
                             .map((format) => format.split("/")[1].toUpperCase())
                             .join(", ")}{" "}
                           • Max {maxImageSizeInMB}MB each
-                          {existingImages.length > 0 &&
+                          {totalImages.length > 0 &&
                             ` • ${
-                              maxImageUpload - existingImages.length
+                              maxImageUpload - totalImages.length
                             } remaining`}
                         </p>
                       </div>
@@ -583,9 +669,9 @@ export function DynamicDataCreateModal({
               )}
 
               {/* Show message when upload limit reached */}
-              {!canUploadMore && existingImages.length >= maxImageUpload && (
-                <div className="text-center p-4 bg-gray-50 rounded-lg border">
-                  <p className="text-sm text-gray-600">
+              {!canUploadMore && totalImages.length >= maxImageUpload && (
+                <div className='text-center p-4 bg-gray-50 rounded-lg border'>
+                  <p className='text-sm text-gray-600'>
                     Maximum {maxImageUpload} image
                     {maxImageUpload > 1 ? "s" : ""} uploaded. Remove an image to
                     add a new one.
@@ -596,7 +682,7 @@ export function DynamicDataCreateModal({
           );
 
         default:
-          return null; // Ignore unsupported field types
+          return null;
       }
     },
     [
@@ -604,6 +690,7 @@ export function DynamicDataCreateModal({
       errors,
       uploading,
       dragActive,
+      originalImages,
       acceptedImageFormats,
       maxImageSizeInMB,
       maxImageUpload,
@@ -613,10 +700,11 @@ export function DynamicDataCreateModal({
       handleFileChange,
       handleRemoveImage,
       openFileDialog,
+      isBase64DataURL,
     ]
   );
 
-  // Group fields by section - FIXED: Proper section filtering
+  // Group fields by section
   const fieldsBySection = useMemo(() => {
     if (sections.length > 0) {
       return sections.map((section) => ({
@@ -627,29 +715,65 @@ export function DynamicDataCreateModal({
     return [{ key: "default", title: "", description: "", fields }];
   }, [sections, fields]);
 
-  // FIXED: Initialize form data properly to prevent infinite re-renders
+  // FIXED: Better initialization of form data and original images
   useEffect(() => {
-    if (isOpen) {
-      // Only set form data if initialData has actual values
-      const hasInitialData = initialData && Object.keys(initialData).length > 0;
-      setFormData(hasInitialData ? { ...initialData } : {});
+    if (isOpen && initialData && Object.keys(initialData).length > 0) {
+      const newFormData = { ...initialData };
+      const newOriginalImages: Record<string, string[]> = {};
 
-      // Reset other states when modal opens
+      // Process image fields to separate original images from form data
+      fields.forEach((field) => {
+        if (field.type === "image" && initialData[field.key]) {
+          const imageValue = initialData[field.key];
+          if (typeof imageValue === "string" && !isBase64DataURL(imageValue)) {
+            // This is an original image URL
+            newOriginalImages[field.key] = [imageValue];
+            // Don't include it in formData initially
+            delete newFormData[field.key];
+          } else if (Array.isArray(imageValue)) {
+            // Handle array of images
+            const originalUrls = imageValue.filter(
+              (img) => typeof img === "string" && !isBase64DataURL(img)
+            );
+            const base64Images = imageValue.filter(
+              (img) => typeof img === "string" && isBase64DataURL(img)
+            );
+
+            if (originalUrls.length > 0) {
+              newOriginalImages[field.key] = originalUrls;
+            }
+            if (base64Images.length > 0) {
+              newFormData[field.key] = base64Images;
+            } else {
+              delete newFormData[field.key];
+            }
+          }
+        }
+      });
+
+      setFormData(newFormData);
+      setOriginalImages(newOriginalImages);
+      setErrors({});
+      setDragActive({});
+      setUploading({});
+    } else if (isOpen) {
+      // Reset everything when opening without initial data
+      setFormData({});
+      setOriginalImages({});
       setErrors({});
       setDragActive({});
       setUploading({});
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  }, [isOpen, initialData, fields, isBase64DataURL]);
 
-  // FIXED: Reset formData when modal closes completely
+  // Reset everything when modal closes
   useEffect(() => {
     if (!isOpen) {
       setFormData({});
+      setOriginalImages({});
       setErrors({});
       setDragActive({});
       setUploading({});
-      // Clear file inputs
       Object.values(fileInputRefs.current).forEach((input) => {
         if (input) input.value = "";
       });
@@ -658,47 +782,45 @@ export function DynamicDataCreateModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-full md:min-w-3xl max-h-[90vh] overflow-y-auto scrollbar-custom">
+      <DialogContent className='max-w-full md:min-w-3xl max-h-[90vh] overflow-y-auto scrollbar-custom'>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className='space-y-6 py-4'>
           {fieldsBySection.map((section) => (
-            <div key={section.key} className="space-y-4">
+            <div key={section.key} className='space-y-4'>
               {section.title && (
-                <div className="space-y-1">
-                  <h3 className="text-lg font-medium">{section.title}</h3>
+                <div className='space-y-1'>
+                  <h3 className='text-lg font-medium'>{section.title}</h3>
                   {section.description && (
-                    <p className="text-sm text-gray-600">
+                    <p className='text-sm text-gray-600'>
                       {section.description}
                     </p>
                   )}
                 </div>
               )}
-              {/* FIXED: Improved grid layout matching DynamicEditModal */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 {section.fields.map((field) => (
                   <div
                     key={field.key}
                     className={cn(
-                      // Full width fields span both columns, half width fields use single column
                       field.gridCol === "full"
                         ? "md:col-span-2"
                         : "md:col-span-1"
                     )}
                   >
-                    <div className="space-y-2">
+                    <div className='space-y-2'>
                       <Label htmlFor={field.key}>
                         {field.label}
                         {field.required && (
-                          <span className="text-red-500 ml-1">*</span>
+                          <span className='text-red-500 ml-1'>*</span>
                         )}
                       </Label>
                       {renderField(field)}
                       {errors[field.key] && (
-                        <p className="text-sm text-red-600">
+                        <p className='text-sm text-red-600'>
                           {errors[field.key]}
                         </p>
                       )}
@@ -711,7 +833,7 @@ export function DynamicDataCreateModal({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>
+          <Button variant='outline' onClick={handleClose}>
             {cancelButtonText}
           </Button>
           <Button onClick={handleSave}>{saveButtonText}</Button>

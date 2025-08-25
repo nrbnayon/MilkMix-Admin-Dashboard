@@ -24,7 +24,7 @@ import { Advertisement } from "@/lib/api/advertisements";
 import { getProfilePictureUrl } from "@/utils/imageUtils";
 
 interface AdsDataItem extends GenericDataItem {
-  id: string; // Changed from number to string
+  id: string;
   title: string;
   external_link: string;
   image: string;
@@ -42,6 +42,35 @@ interface AdsManagementProps {
   pageUrl?: string;
   showAds?: number;
 }
+
+// Helper function to convert base64 to File object
+const base64ToFile = (base64: string, filename: string): File => {
+  const arr = base64.split(",");
+  const mime = arr[0].match(/:(.*?);/)?.[1] || "image/png";
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], filename, { type: mime });
+};
+
+// Helper function to extract file extension from base64
+const getFileExtensionFromBase64 = (base64: string): string => {
+  const mimeType = base64.split(",")[0].match(/:(.*?);/)?.[1];
+  switch (mimeType) {
+    case "image/jpeg":
+    case "image/jpg":
+      return ".jpg";
+    case "image/png":
+      return ".png";
+    case "image/webp":
+      return ".webp";
+    default:
+      return ".png";
+  }
+};
 
 export default function ManagementAds({
   itemsPerPage = 12,
@@ -80,9 +109,16 @@ export default function ManagementAds({
 
   console.log("Fetched all ads:", ads);
 
-  // Check if we should show Add Ads button - Fixed logic
+  // Check if we should show Add Ads button
   const shouldShowAddButton = ads.length < showAds;
-  console.log("Should show Add Ads button:", shouldShowAddButton, "Current ads:", ads.length, "Max ads:", showAds);
+  console.log(
+    "Should show Add Ads button:",
+    shouldShowAddButton,
+    "Current ads:",
+    ads.length,
+    "Max ads:",
+    showAds
+  );
 
   // Column Configuration for Ads
   const adsColumns: ColumnConfig[] = [
@@ -93,8 +129,8 @@ export default function ManagementAds({
       searchable: true,
       align: "left",
       render: (value, item) => (
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+        <div className='flex items-center gap-3'>
+          <div className='w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0'>
             <Image
               src={
                 typeof item.image === "string" && item.image.trim() !== ""
@@ -102,13 +138,13 @@ export default function ManagementAds({
                   : "/placeholder.svg"
               }
               alt={String(value)}
-              className="w-full h-full object-cover"
+              className='w-full h-full object-cover'
               width={48}
               height={48}
             />
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-medium text-sm truncate">{String(value)}</p>
+          <div className='min-w-0 flex-1'>
+            <p className='font-medium text-sm truncate'>{String(value)}</p>
           </div>
         </div>
       ),
@@ -120,14 +156,14 @@ export default function ManagementAds({
       render: (value) => {
         const link = value as string;
         if (!link || link.trim() === "") {
-          return <span className="text-gray-400">No link</span>;
+          return <span className='text-gray-400'>No link</span>;
         }
         return (
           <a
             href={link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline text-sm truncate max-w-32 block"
+            target='_blank'
+            rel='noopener noreferrer'
+            className='text-blue-600 hover:underline text-sm truncate max-w-32 block'
           >
             {link}
           </a>
@@ -251,10 +287,10 @@ export default function ManagementAds({
       label: "Edit Ad",
       icon: (
         <Lordicon
-          src="https://cdn.lordicon.com/cbtlerlm.json"
-          trigger="hover"
+          src='https://cdn.lordicon.com/cbtlerlm.json'
+          trigger='hover'
           size={16}
-          className="mt-1"
+          className='mt-1'
           colors={{
             primary: "#9ca3af",
             secondary: "",
@@ -270,10 +306,10 @@ export default function ManagementAds({
       label: "Delete Ad",
       icon: (
         <Lordicon
-          src="https://cdn.lordicon.com/jmkrnisz.json"
-          trigger="hover"
+          src='https://cdn.lordicon.com/jmkrnisz.json'
+          trigger='hover'
           size={16}
-          className="mt-1"
+          className='mt-1'
           colors={{
             primary: "#FF0000",
             secondary: "#FFFFFF",
@@ -282,7 +318,7 @@ export default function ManagementAds({
         />
       ),
       variant: "ghost",
-      onClick: (item) => handleDeleteAd(Number(item.id)), // Convert back to number for API
+      onClick: (item) => handleDeleteAd(Number(item.id)),
     },
   ];
 
@@ -305,7 +341,7 @@ export default function ManagementAds({
       key: "image",
       label: "Ad Image",
       type: "image",
-      required: false,
+      required: true, // Make required for create
       section: "basic",
       gridCol: "full",
     },
@@ -379,19 +415,32 @@ export default function ManagementAds({
     },
   ];
 
-  // Handle creating new ad
+  // FIXED: Handle creating new ad with proper image handling
   const handleCreateAd = async (data: Record<string, unknown>) => {
     try {
       console.log("Creating ad with data:", data);
-      
-      const imageFile =
-        Array.isArray(data.image) && data.image.length > 0
-          ? (data.image[0] as File)
-          : (data.image as File);
 
-      if (!imageFile || !(imageFile instanceof File)) {
+      // Handle image data - convert base64 to File if necessary
+      let imageFile: File | null = null;
+
+      if (data.image) {
+        const imageData = Array.isArray(data.image)
+          ? data.image[0]
+          : data.image;
+
+        if (typeof imageData === "string" && imageData.startsWith("data:")) {
+          // Convert base64 to File
+          const extension = getFileExtensionFromBase64(imageData);
+          const filename = `ad_image_${Date.now()}${extension}`;
+          imageFile = base64ToFile(imageData, filename);
+        } else if (imageData instanceof File) {
+          imageFile = imageData;
+        }
+      }
+
+      if (!imageFile) {
         console.error("No valid image file provided");
-        return;
+        throw new Error("Image is required for creating an advertisement");
       }
 
       const createData = {
@@ -400,17 +449,25 @@ export default function ManagementAds({
         image: imageFile,
         target_user: String(data.target_user || "All User"),
         status: String(data.status || "Draft"),
-        start_date: new Date(data.start_date as string).toISOString(),
-        end_date: new Date(data.end_date as string).toISOString(),
+        start_date: data.start_date
+          ? new Date(data.start_date as string).toISOString()
+          : new Date().toISOString(),
+        end_date: data.end_date
+          ? new Date(data.end_date as string).toISOString()
+          : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       };
 
-      console.log("Sending create data:", createData);
+      console.log("Sending create data:", {
+        ...createData,
+        image: imageFile.name, // Don't log the entire file object
+      });
 
       await createMutation.mutateAsync(createData);
       setCreateModalOpen(false);
       console.log("Advertisement created successfully");
     } catch (error) {
       console.error("Failed to create advertisement:", error);
+      throw error; // Let the modal handle the error display
     }
   };
 
@@ -421,7 +478,7 @@ export default function ManagementAds({
     setEditModalOpen(true);
   };
 
-  // Handle updating ad
+  // FIXED: Handle updating ad with proper image handling
   const handleUpdateAd = async (data: Record<string, unknown>) => {
     if (!editingAd) return;
 
@@ -435,7 +492,10 @@ export default function ManagementAds({
       if (data.title && data.title !== editingAd.title) {
         updateData.title = String(data.title);
       }
-      if (data.external_link && data.external_link !== editingAd.external_link) {
+      if (
+        data.external_link &&
+        data.external_link !== editingAd.external_link
+      ) {
         updateData.external_link = String(data.external_link);
       }
       if (data.target_user && data.target_user !== editingAd.target_user) {
@@ -445,36 +505,49 @@ export default function ManagementAds({
         updateData.status = String(data.status);
       }
       if (data.start_date) {
-        updateData.start_date = new Date(data.start_date as string).toISOString();
+        updateData.start_date = new Date(
+          data.start_date as string
+        ).toISOString();
       }
       if (data.end_date) {
         updateData.end_date = new Date(data.end_date as string).toISOString();
       }
 
-      // Handle image update
+      // FIXED: Handle image update properly
       if (data.image) {
-        const imageFile =
-          Array.isArray(data.image) && data.image.length > 0
-            ? (data.image[0] as File)
-            : (data.image as File);
+        const imageData = Array.isArray(data.image)
+          ? data.image[0]
+          : data.image;
 
-        if (imageFile instanceof File) {
-          updateData.image = imageFile;
+        if (typeof imageData === "string" && imageData.startsWith("data:")) {
+          // Convert base64 to File
+          const extension = getFileExtensionFromBase64(imageData);
+          const filename = `ad_image_${Date.now()}${extension}`;
+          updateData.image = base64ToFile(imageData, filename);
+        } else if (imageData instanceof File) {
+          updateData.image = imageData;
         }
+        // If imageData is a URL string (existing image), don't include it in update
       }
 
-      console.log("Sending update data:", updateData);
+      console.log("Sending update data:", {
+        ...updateData,
+        image: updateData.image
+          ? (updateData.image as File).name
+          : "No image update",
+      });
 
       await updateMutation.mutateAsync({
-        id: Number(editingAd.id), // Convert back to number for API
+        id: Number(editingAd.id),
         data: updateData,
       });
-      
+
       setEditModalOpen(false);
       setEditingAd(null);
       console.log("Advertisement updated successfully");
     } catch (error) {
       console.error("Failed to update advertisement:", error);
+      throw error; // Let the modal handle the error display
     }
   };
 
@@ -489,13 +562,13 @@ export default function ManagementAds({
     }
   };
 
-  // Prepare initial data for edit modal
+  // FIXED: Prepare initial data for edit modal with proper image URL
   const getEditInitialData = () => {
     if (!editingAd) return {};
 
     return {
       title: editingAd.title,
-      image: getProfilePictureUrl(editingAd.image),
+      image: editingAd.image, // Use the actual image URL, not base64
       external_link: editingAd.external_link,
       target_user: editingAd.target_user,
       status: editingAd.status,
@@ -505,19 +578,19 @@ export default function ManagementAds({
   };
 
   return (
-    <div className="w-full mx-auto">
-      <div className="w-full flex justify-between items-center mb-6">
-        <h2 className="text-foreground text-xl font-semibold">{title}</h2>
+    <div className='w-full mx-auto'>
+      <div className='w-full flex justify-between items-center mb-6'>
+        <h2 className='text-foreground text-xl font-semibold'>{title}</h2>
         {shouldShowAddButton && (
           <Button
-            className="flex items-center gap-2 border-primary/30 rounded-md"
-            size="lg"
+            className='flex items-center gap-2 border-primary/30 rounded-md'
+            size='lg'
             onClick={() => setCreateModalOpen(true)}
           >
-            <span className="mt-1.5">
+            <span className='mt-1.5'>
               <Lordicon
-                src="https://cdn.lordicon.com/ueoydrft.json"
-                trigger="hover"
+                src='https://cdn.lordicon.com/ueoydrft.json'
+                trigger='hover'
                 size={20}
                 colors={{
                   primary: "",
@@ -544,7 +617,7 @@ export default function ManagementAds({
           updateMutation.isPending ||
           deleteMutation.isPending
         }
-        emptyMessage="No ads found"
+        emptyMessage='No ads found'
         itemsPerPage={itemsPerPage}
       />
 
@@ -553,8 +626,8 @@ export default function ManagementAds({
         isOpen={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
         onSave={handleCreateAd}
-        title="Create New Ad"
-        description="Create and publish ads with rich content"
+        title='Create New Ad'
+        description='Create and publish ads with rich content'
         fields={createFormFields}
         sections={createModalSections}
         initialData={{
@@ -565,8 +638,8 @@ export default function ManagementAds({
             .toISOString()
             .slice(0, 16),
         }}
-        saveButtonText="Create Ad"
-        cancelButtonText="Cancel"
+        saveButtonText='Create Ad'
+        cancelButtonText='Cancel'
         maxImageSizeInMB={5}
         maxImageUpload={1}
         acceptedImageFormats={[
@@ -586,13 +659,16 @@ export default function ManagementAds({
             setEditingAd(null);
           }}
           onSave={handleUpdateAd}
-          title="Edit Ad"
-          description="Update ad information and settings"
-          fields={createFormFields}
+          title='Edit Ad'
+          description='Update ad information and settings'
+          fields={createFormFields.map((field) => ({
+            ...field,
+            required: field.key === "image" ? false : field.required, // Make image optional for edit
+          }))}
           sections={createModalSections}
           initialData={getEditInitialData()}
-          saveButtonText="Update Ad"
-          cancelButtonText="Cancel"
+          saveButtonText='Update Ad'
+          cancelButtonText='Cancel'
           maxImageUpload={1}
           maxImageSizeInMB={5}
           acceptedImageFormats={[
