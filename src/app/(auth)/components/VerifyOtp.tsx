@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -16,6 +15,8 @@ import { Loader2, ArrowLeft, Clock, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useVerifyOTP, useCreateOTP } from "@/hooks/useApi";
+import { toast } from "sonner";
 
 // Validation schema
 const otpSchema = z.object({
@@ -30,12 +31,12 @@ type OtpFormData = z.infer<typeof otpSchema>;
 
 export default function VerifyOtp() {
   const [otp, setOtp] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isResending, setIsResending] = useState(false);
   const [timeLeft, setTimeLeft] = useState(120);
   const [email, setEmail] = useState("");
   const router = useRouter();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const verifyOTPMutation = useVerifyOTP();
+  const createOTPMutation = useCreateOTP();
 
   const {
     handleSubmit,
@@ -113,75 +114,57 @@ export default function VerifyOtp() {
   };
 
   const onSubmit = async (data: OtpFormData) => {
-    setIsLoading(true);
-
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Log the form data to console
-      console.log("OTP Verification Data:", {
+      const response = await verifyOTPMutation.mutateAsync({
         email,
         otp: data.otp,
-        timestamp: new Date().toISOString(),
       });
 
-      // Simulate successful OTP verification
-      toast.success("OTP verified successfully!", {
-        description: "Redirecting to reset password...",
-        duration: 2000,
-      });
+      if (response.success) {
+        toast.success("OTP verified successfully!", {
+          description: "Redirecting to reset password...",
+          duration: 2000,
+        });
 
-      // Store verification status
-      localStorage.setItem("otpVerified", "true");
-      localStorage.setItem("verificationTime", Date.now().toString());
+        // Store verification status
+        localStorage.setItem("otpVerified", "true");
+        localStorage.setItem("verificationTime", Date.now().toString());
 
-      // Clear timer from localStorage
-      const timerKey = `otpTimer_${email}`;
-      localStorage.removeItem(timerKey);
+        // Clear timer from localStorage
+        const timerKey = `otpTimer_${email}`;
+        localStorage.removeItem(timerKey);
 
-      // Redirect to reset password after a short delay
-      setTimeout(() => {
-        router.push("/reset-password");
-      }, 1000);
+        // Redirect to reset password after a short delay
+        setTimeout(() => {
+          router.push("/reset-password");
+        }, 1000);
+      }
     } catch (error) {
       console.error("OTP verification error:", error);
-      toast.error("Invalid OTP", {
-        description: "Please check the code and try again.",
-        duration: 3000,
-      });
       setError("otp", { message: "Invalid OTP code" });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleResendOtp = async () => {
-    setIsResending(true);
-
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await createOTPMutation.mutateAsync({ email });
 
-      // Reset timer
-      setTimeLeft(120);
-      const newSentTime = Date.now();
-      localStorage.setItem("otpSentTime", newSentTime.toString());
-      const timerKey = `otpTimer_${email}`;
-      localStorage.setItem(timerKey, "120");
+      if (response.success) {
+        // Reset timer
+        setTimeLeft(120);
+        const newSentTime = Date.now();
+        localStorage.setItem("otpSentTime", newSentTime.toString());
+        const timerKey = `otpTimer_${email}`;
+        localStorage.setItem(timerKey, "120");
 
-      toast.success("OTP resent successfully!", {
-        description: `New verification code sent to ${email}`,
-        duration: 2000,
-      });
+        toast.success("OTP resent successfully!", {
+          description: `New verification code sent to ${email}`,
+          duration: 2000,
+        });
+      }
     } catch (error) {
       console.error("Resend OTP error:", error);
-      toast.error("Failed to resend OTP", {
-        description: "Please try again later.",
-        duration: 3000,
-      });
-    } finally {
-      setIsResending(false);
+      // Error is handled by the mutation
     }
   };
 
@@ -325,13 +308,13 @@ export default function VerifyOtp() {
                 type="submit"
                 className="w-full h-10 sm:h-12 bg-primary/80 hover:bg-primary text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-indigo-500/20 text-sm sm:text-base"
                 disabled={
-                  isLoading ||
+                  verifyOTPMutation.isPending ||
                   isSubmitting ||
                   otp.length !== 6 ||
                   timeLeft === 0
                 }
               >
-                {isLoading ? (
+                {verifyOTPMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     <span className="hidden sm:inline">Verifying...</span>
@@ -354,10 +337,10 @@ export default function VerifyOtp() {
                   type="button"
                   variant="outline"
                   onClick={handleResendOtp}
-                  disabled={timeLeft > 0 || isResending}
+                  disabled={timeLeft > 0 || createOTPMutation.isPending}
                   className="bg-white/10 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 h-10 sm:h-12 text-sm sm:text-base"
                 >
-                  {isResending ? (
+                  {createOTPMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       <span className="hidden sm:inline">Resending...</span>

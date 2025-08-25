@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,12 +11,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { emailValidationSchema } from "@/lib/formDataValidation";
+import { usePasswordResetRequest } from "@/hooks/useApi";
+import { toast } from "sonner";
 
 type ForgetPasswordFormData = z.infer<typeof emailValidationSchema>;
 
 export default function ForgetPassword() {
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const passwordResetMutation = usePasswordResetRequest();
 
   const {
     register,
@@ -31,40 +32,27 @@ export default function ForgetPassword() {
   });
 
   const onSubmit = async (data: ForgetPasswordFormData) => {
-    setIsLoading(true);
-
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const response = await passwordResetMutation.mutateAsync({ email: data.email });
+      
+      if (response.success) {
+        toast.success("OTP sent successfully!", {
+          description: `Verification code sent to ${data.email}`,
+          duration: 2000,
+        });
 
-      // Log the form data to console
-      console.log("Forget Password Form Data:", {
-        email: data.email,
-        timestamp: new Date().toISOString(),
-      });
+        // Store email in localStorage for OTP verification
+        localStorage.setItem("resetEmail", data.email);
+        localStorage.setItem("otpSentTime", Date.now().toString());
 
-      // Simulate successful OTP send
-      toast.success("OTP sent successfully!", {
-        description: `Verification code sent to ${data.email}`,
-        duration: 2000,
-      });
-
-      // Store email in localStorage for OTP verification
-      localStorage.setItem("resetEmail", data.email);
-      localStorage.setItem("otpSentTime", Date.now().toString());
-
-      // Redirect to OTP verification after a short delay
-      setTimeout(() => {
-        router.push("/verify-otp");
-      }, 1000);
+        // Redirect to OTP verification after a short delay
+        setTimeout(() => {
+          router.push("/verify-otp");
+        }, 1000);
+      }
     } catch (error) {
       console.error("Forget password error:", error);
-      toast.error("Failed to send OTP", {
-        description: "Please check your email and try again.",
-        duration: 3000,
-      });
-    } finally {
-      setIsLoading(false);
+      // Error is handled by the mutation
     }
   };
 

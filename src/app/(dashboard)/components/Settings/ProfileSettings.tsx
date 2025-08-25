@@ -17,7 +17,6 @@ import {
   Trash2,
   LogOut,
 } from "lucide-react";
-import { toast } from "sonner";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +29,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import Lordicon from "@/components/lordicon/lordicon-wrapper";
+import { useAuth } from "@/contexts/AuthContext";
+import { useUpdateProfile } from "@/hooks/useApi";
+import { toast } from "sonner";
 
 // Validation schema
 const profileSchema = z.object({
@@ -46,6 +48,8 @@ export default function ProfileSettings() {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { user, logout, updateUser } = useAuth();
+  const updateProfileMutation = useUpdateProfile();
 
   const {
     register,
@@ -55,10 +59,10 @@ export default function ProfileSettings() {
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      full_name: "Nrb Nayon",
-      phone: "+880 1234 567890",
-      bio: "Full-stack developer specializing in MERN stack with a passion for creating scalable web applications.",
-      location: "Dhaka, Bangladesh",
+      full_name: user?.name || "",
+      phone: user?.phone_number || "",
+      bio: "",
+      location: "",
     },
   });
 
@@ -88,14 +92,29 @@ export default function ProfileSettings() {
 
   const onSubmit = async (data: ProfileFormData) => {
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Profile updated:", data);
-      toast.success("Profile updated successfully!");
-      setIsEditing(false);
+      const updateData: any = {
+        first_name: data.full_name.split(' ')[0],
+        last_name: data.full_name.split(' ').slice(1).join(' '),
+        phone_number: data.phone,
+      };
+
+      // Add profile picture if uploaded
+      if (profileImage && profileImage.startsWith('data:')) {
+        // Convert base64 to file
+        const response = await fetch(profileImage);
+        const blob = await response.blob();
+        updateData.profile_picture = new File([blob], 'profile.jpg', { type: 'image/jpeg' });
+      }
+
+      const result = await updateProfileMutation.mutateAsync(updateData);
+      
+      if (result.success && result.data) {
+        updateUser(result.data);
+        setIsEditing(false);
+      }
     } catch (error) {
-      console.log("Faild update profile::", error);
-      toast.error("Failed to update profile. Please try again.");
+      console.error("Failed to update profile:", error);
+      // Error is handled by the mutation
     }
   };
 
@@ -115,7 +134,8 @@ export default function ProfileSettings() {
   };
 
   const handleDeleteConfirm = () => {
-    console.log("account deleted");
+    // Implement account deletion logic here
+    toast.info("Account deletion feature will be implemented");
     setIsDialogOpen(false);
   };
 
@@ -350,7 +370,7 @@ export default function ProfileSettings() {
                     </label>
                     <input
                       type="email"
-                      value="nayon@example.com"
+                      value={user?.email || ""}
                       disabled
                       className="w-full px-4 py-3 border-2 border-primary/30 bg-slate-50 rounded-md cursor-not-allowed text-black"
                     />
@@ -446,7 +466,7 @@ export default function ProfileSettings() {
               <div className="w-full">
                 <button
                   onClick={() => {
-                    console.log("Logout clicked");
+                    logout();
                   }}
                   className="w-full cursor-pointer"
                 >

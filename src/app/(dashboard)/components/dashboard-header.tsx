@@ -2,6 +2,7 @@ import { ModeToggle } from "@/components/ui/mode-toggle";
 import { cn } from "@/lib/utils";
 import Lordicon from "@/components/lordicon/lordicon-wrapper";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function DashboardHeader({
   title = "Welcome",
@@ -10,6 +11,8 @@ export default function DashboardHeader({
   title?: string;
   subtitle?: string;
 }) {
+  const { user } = useAuth();
+  
   return (
     <header
       className={cn(
@@ -20,11 +23,11 @@ export default function DashboardHeader({
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl md:text-3xl font-bold tracking-tight">
-              {title}
+              {user ? `Welcome ${user.name}` : title}
             </h1>
             {subtitle && (
               <h3 className="text-sm md:text-base font-medium">
-                {title}
+                {subtitle}
               </h3>
             )}
           </div>

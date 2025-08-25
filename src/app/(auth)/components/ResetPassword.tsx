@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -20,15 +19,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { resetPasswordValidationSchema } from "@/lib/formDataValidation";
+import { usePasswordResetConfirm } from "@/hooks/useApi";
+import { toast } from "sonner";
 
 type ResetPasswordFormData = z.infer<typeof resetPasswordValidationSchema>;
 
 export default function ResetPassword() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const router = useRouter();
+  const passwordResetConfirmMutation = usePasswordResetConfirm();
 
   const {
     register,
@@ -93,43 +94,44 @@ export default function ResetPassword() {
   }, [router, setValue]);
 
   const onSubmit = async (data: ResetPasswordFormData) => {
-    setIsLoading(true);
-
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Get OTP from localStorage (should be stored during verification)
+      const otp = localStorage.getItem("verifiedOTP");
+      if (!otp) {
+        toast.error("Session expired", {
+          description: "Please start the password reset process again.",
+        });
+        router.push("/forgot-password");
+        return;
+      }
 
-      // Log the form data to console (excluding password for security)
-      console.log("Reset Password Data:", {
+      const response = await passwordResetConfirmMutation.mutateAsync({
         email: data.email,
-        passwordLength: data.newPassword.length,
-        timestamp: new Date().toISOString(),
+        otp,
+        new_password: data.newPassword,
       });
 
-      // Simulate successful password reset
-      toast.success("Password reset successful!", {
-        description: "Your password has been updated successfully.",
-        duration: 2000,
-      });
+      if (response.success) {
+        toast.success("Password reset successful!", {
+          description: "Your password has been updated successfully.",
+          duration: 2000,
+        });
 
-      // Clear all reset-related data from localStorage
-      localStorage.removeItem("resetEmail");
-      localStorage.removeItem("otpVerified");
-      localStorage.removeItem("verificationTime");
-      localStorage.removeItem("otpSentTime");
+        // Clear all reset-related data from localStorage
+        localStorage.removeItem("resetEmail");
+        localStorage.removeItem("otpVerified");
+        localStorage.removeItem("verificationTime");
+        localStorage.removeItem("otpSentTime");
+        localStorage.removeItem("verifiedOTP");
 
-      // Redirect to success page after a short delay
-      setTimeout(() => {
-        router.push("/reset-success");
-      }, 1000);
+        // Redirect to success page after a short delay
+        setTimeout(() => {
+          router.push("/reset-success");
+        }, 1000);
+      }
     } catch (error) {
       console.error("Reset password error:", error);
-      toast.error("Password reset failed", {
-        description: "Please try again later.",
-        duration: 3000,
-      });
-    } finally {
-      setIsLoading(false);
+      // Error is handled by the mutation
     }
   };
 

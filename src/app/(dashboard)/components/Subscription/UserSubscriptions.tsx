@@ -1,6 +1,5 @@
 // src\app\(dashboard)\components\Subscription\UserSubscriptions.tsx
 "use client";
-import { usersData } from "@/data/usersDataSets";
 import { useState } from "react";
 import type {
   GenericDataItem,
@@ -13,6 +12,7 @@ import type {
 } from "@/types/dynamicTableTypes";
 import { DynamicTable } from "@/components/common/DynamicTable";
 import Lordicon from "@/components/lordicon/lordicon-wrapper";
+import { useSubscriptions } from "@/hooks/useApi";
 
 interface UserManagementProps {
   itemsPerPage?: number;
@@ -27,10 +27,29 @@ export default function UserSubscriptions({
   buttonText = "Show all",
   pageUrl = "/users-subscription",
 }: UserManagementProps) {
-  const [users, setUsers] = useState<GenericDataItem[]>(
-    usersData as GenericDataItem[]
-  );
-  const [isLoading, setIsLoading] = useState(false);
+  const { data: subscriptionsResponse, isLoading, refetch } = useSubscriptions();
+  const [users, setUsers] = useState<GenericDataItem[]>([]);
+
+  // Transform API data to match component expectations
+  React.useEffect(() => {
+    if (subscriptionsResponse?.success && subscriptionsResponse.data) {
+      const transformedUsers = subscriptionsResponse.data.map((subscription) => ({
+        id: subscription.id.toString(),
+        name: `User ${subscription.user}`,
+        email: `user${subscription.user}@example.com`,
+        avatar: '',
+        status: subscription.status,
+        accountType: subscription.plan_name.toLowerCase(),
+        subscription: subscription.plan_name,
+        amount: subscription.amount,
+        startDate: subscription.start_date,
+        endDate: subscription.end_date,
+        isActive: subscription.status === 'active',
+        createdAt: subscription.start_date,
+      }));
+      setUsers(transformedUsers as GenericDataItem[]);
+    }
+  }, [subscriptionsResponse]);
 
   // Column Configuration for User Table
   const userColumns: ColumnConfig[] = [
@@ -390,13 +409,7 @@ export default function UserSubscriptions({
   };
 
   const handleRefresh = () => {
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setUsers([...usersData] as GenericDataItem[]);
-      setIsLoading(false);
-      console.log("Users data refreshed");
-    }, 1000);
+    refetch();
   };
 
   return (

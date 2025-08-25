@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,13 +12,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { loginValidationSchema } from "@/lib/formDataValidation";
+import { useAuth } from "@/contexts/AuthContext";
 
 type LoginFormData = z.infer<typeof loginValidationSchema>;
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { login, isLoading } = useAuth();
 
   const {
     register,
@@ -39,47 +39,19 @@ export default function LoginForm() {
   const rememberMe = watch("rememberMe");
 
   const onSubmit = async (data: LoginFormData) => {
-    setIsLoading(true);
+    const success = await login({
+      email: data.email,
+      password: data.password,
+    });
 
-    try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Log the form data to console
-      console.log("Login Form Data:", {
-        email: data.email,
-        password: data.password,
-        rememberMe: data.rememberMe,
-        timestamp: new Date().toISOString(),
-      });
-
-      // Simulate successful login
-      toast.success("Login successful!", {
-        description: `Welcome back, ${data.email}!`,
-        duration: 2000,
-      });
-
-      // Redirect to dashboard after a short delay
-      setTimeout(() => {
-        router.push("/overview");
-      }, 1000);
-    } catch (error) {
-      console.error("Login error:", error);
-      toast.error("Login failed", {
-        description: "Please check your credentials and try again.",
-        duration: 3000,
-      });
-    } finally {
-      setIsLoading(false);
+    if (success) {
+      router.push("/overview");
     }
   };
 
   const handleDemoLogin = () => {
     setValue("email", "demo@gmail.com");
     setValue("password", "demo123");
-    toast.info("Demo credentials filled", {
-      description: "Click Login to continue with demo account",
-    });
   };
 
   return (

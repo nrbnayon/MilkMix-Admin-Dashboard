@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -21,14 +20,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { signupValidationSchema } from "@/lib/formDataValidation";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 type SignupFormData = z.infer<typeof signupValidationSchema>;
 
 export default function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { register: registerUser, isLoading } = useAuth();
 
   const {
     register,
@@ -50,14 +51,6 @@ export default function SignUpForm() {
   const agreeToTerms = watch("agreeToTerms");
   const password = watch("password");
 
-  interface SignupFormResponse {
-    full_name: string;
-    email: string;
-    password: string;
-    agreeToTerms: boolean;
-    timestamp: string;
-    userAgent: string;
-  }
 
   // Prevent spaces in email and password fields
   const handleEmailKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -91,40 +84,15 @@ export default function SignUpForm() {
   };
 
   const onSubmit = async (data: SignupFormData): Promise<void> => {
-    setIsLoading(true);
+    const success = await registerUser({
+      name: data.full_name,
+      email: data.email,
+      password: data.password,
+      role: 'consultant', // Default role, can be made dynamic
+    });
 
-    try {
-      // Simulate API call delay
-      await new Promise<void>((resolve) => setTimeout(resolve, 2000));
-
-      // Log the form data to console
-      console.log("Signup Form Data:", {
-        full_name: data.full_name,
-        email: data.email,
-        password: data.password,
-        agreeToTerms: data.agreeToTerms,
-        timestamp: new Date().toISOString(),
-        userAgent: navigator.userAgent,
-      } as SignupFormResponse);
-
-      // Simulate successful signup
-      toast.success("Account created successfully!", {
-        description: `Welcome ${data.full_name}! Please check your email to verify your account.`,
-        duration: 3000,
-      });
-
-      // Redirect to login page after a short delay
-      setTimeout(() => {
-        router.push("/login");
-      }, 1500);
-    } catch (error: unknown) {
-      console.error("Signup error:", error);
-      toast.error("Registration failed", {
-        description: "Something went wrong. Please try again later.",
-        duration: 3000,
-      });
-    } finally {
-      setIsLoading(false);
+    if (success) {
+      router.push("/login");
     }
   };
 

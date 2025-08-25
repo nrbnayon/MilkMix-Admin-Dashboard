@@ -32,171 +32,21 @@ import type {
   SearchFilterConfig,
 } from "@/types/dynamicCardTypes";
 import type { GenericDataItem, ColumnConfig } from "@/types/dynamicTableTypes";
+import { useNotifications, useMarkNotificationAsRead } from "@/hooks/useApi";
+import type { Notification } from "@/types/api";
 
 // Types
 interface NotificationData extends GenericDataItem {
   id: string;
   title: string;
   message: string;
-  type:
-    | "info"
-    | "success"
-    | "warning"
-    | "error"
-    | "user"
-    | "system"
-    | "payment";
+  type: "info" | "success" | "warning" | "error" | "user" | "system" | "payment";
   isRead: boolean;
   createdAt: Date;
   updatedAt: Date;
   priority: "low" | "medium" | "high" | "urgent";
   category: string;
-  actionUrl?: string;
-  metadata?: {
-    userId?: string;
-    userName?: string;
-    userAvatar?: string;
-    amount?: number;
-    orderId?: string;
-    systemComponent?: string;
-    ipAddress?: string;
-    attemptCount?: number;
-    backupSize?: string;
-    backupLocation?: string;
-    updateType?: string;
-    [key: string]: unknown;
-  };
 }
-
-// Fixed mock data with deterministic values
-const generateMockNotifications = (): NotificationData[] => {
-  // Use a fixed base date for consistent server/client rendering
-  const baseDate = new Date("2024-08-04T10:00:00Z");
-
-  const staticNotifications: NotificationData[] = [
-    {
-      id: "1",
-      title: "New User Registration",
-      message: "John Doe has successfully registered to the platform",
-      type: "user",
-      isRead: false,
-      createdAt: new Date(baseDate.getTime() - 1000 * 60 * 5), // 5 minutes ago
-      updatedAt: new Date(baseDate.getTime() - 1000 * 60 * 5),
-      priority: "medium",
-      category: "User Management",
-      metadata: {
-        userId: "user_123",
-        userName: "John Doe",
-        userAvatar: "/placeholder.svg",
-      },
-    },
-    {
-      id: "2",
-      title: "Payment Received",
-      message:
-        "Payment of $299.99 has been successfully processed for Order #ORD-2024-001",
-      type: "payment",
-      isRead: false,
-      createdAt: new Date(baseDate.getTime() - 1000 * 60 * 15), // 15 minutes ago
-      updatedAt: new Date(baseDate.getTime() - 1000 * 60 * 15),
-      priority: "high",
-      category: "Financial",
-      metadata: {
-        amount: 299.99,
-        orderId: "ORD-2024-001",
-        userId: "user_456",
-        userName: "Sarah Johnson",
-      },
-    },
-    {
-      id: "3",
-      title: "System Maintenance",
-      message:
-        "Scheduled maintenance will begin at 2:00 AM UTC. Expected downtime: 30 minutes",
-      type: "system",
-      isRead: true,
-      createdAt: new Date(baseDate.getTime() - 1000 * 60 * 60 * 2), // 2 hours ago
-      updatedAt: new Date(baseDate.getTime() - 1000 * 60 * 30),
-      priority: "urgent",
-      category: "System",
-      metadata: {
-        systemComponent: "Database Server",
-      },
-    },
-    {
-      id: "4",
-      title: "Security Alert",
-      message: "Multiple failed login attempts detected from IP 192.168.1.100",
-      type: "warning",
-      isRead: false,
-      createdAt: new Date(baseDate.getTime() - 1000 * 60 * 60 * 1), // 1 hour ago
-      updatedAt: new Date(baseDate.getTime() - 1000 * 60 * 60 * 1),
-      priority: "urgent",
-      category: "Security",
-      metadata: {
-        ipAddress: "192.168.1.100",
-        attemptCount: 5,
-      },
-    },
-    {
-      id: "5",
-      title: "Data Backup Completed",
-      message:
-        "Daily backup process completed successfully. 1.2GB of data backed up.",
-      type: "success",
-      isRead: true,
-      createdAt: new Date(baseDate.getTime() - 1000 * 60 * 60 * 6), // 6 hours ago
-      updatedAt: new Date(baseDate.getTime() - 1000 * 60 * 60 * 3),
-      priority: "low",
-      category: "System",
-      metadata: {
-        backupSize: "1.2GB",
-        backupLocation: "AWS S3",
-      },
-    },
-    {
-      id: "6",
-      title: "Profile Update Request",
-      message:
-        "User Emma Wilson has requested to update their profile information",
-      type: "info",
-      isRead: false,
-      createdAt: new Date(baseDate.getTime() - 1000 * 60 * 60 * 12), // 12 hours ago
-      updatedAt: new Date(baseDate.getTime() - 1000 * 60 * 60 * 12),
-      priority: "medium",
-      category: "User Management",
-      metadata: {
-        userId: "user_789",
-        userName: "Emma Wilson",
-        userAvatar: "/placeholder.svg",
-        updateType: "Profile Information",
-      },
-    },
-  ];
-
-  // Generate additional mock data with deterministic values
-  const additionalNotifications = Array.from({ length: 25 }, (_, i) => ({
-    id: `${7 + i}`,
-    title: `Sample Notification ${7 + i}`,
-    message: `This is a sample notification message for item ${7 + i}`,
-    type: ["info", "success", "warning", "error", "user", "system", "payment"][
-      i % 7
-    ] as NotificationData["type"],
-    isRead: i % 3 === 0, // Deterministic pattern instead of Math.random()
-    createdAt: new Date(baseDate.getTime() - 1000 * 60 * 60 * (i + 1)),
-    updatedAt: new Date(baseDate.getTime() - 1000 * 60 * 60 * (i + 1)),
-    priority: ["low", "medium", "high", "urgent"][
-      i % 4
-    ] as NotificationData["priority"],
-    category: ["User Management", "Financial", "System", "Security"][i % 4],
-    metadata: {
-      userId: `user_${7 + i}`,
-      userName: `User ${7 + i}`,
-    },
-  }));
-
-  return [...staticNotifications, ...additionalNotifications];
-};
 
 // Column configuration for ViewModal
 const notificationColumns: ColumnConfig[] = [
@@ -247,19 +97,23 @@ const notificationColumns: ColumnConfig[] = [
 ];
 
 export default function Notifications() {
-  const [notifications, setNotifications] = useState<NotificationData[]>([]);
+  const { data: notificationsResponse, isLoading: notificationsLoading, refetch } = useNotifications();
+  const markAsReadMutation = useMarkNotificationAsRead();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [selectedNotification, setSelectedNotification] =
-    useState<NotificationData | null>(null);
+    useState<Notification | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isClient, setIsClient] = useState(false);
   const itemsPerPage = 20;
 
-  // Initialize notifications only on client side
+  // Transform API data
   useEffect(() => {
     setIsClient(true);
-    setNotifications(generateMockNotifications());
-  }, []);
+    if (notificationsResponse?.success && notificationsResponse.data) {
+      setNotifications(notificationsResponse.data);
+    }
+  }, [notificationsResponse]);
 
   // Search and filter state
   const [searchFilterState, setSearchFilterState] = useState<SearchFilterState>(
@@ -338,7 +192,7 @@ export default function Notifications() {
   };
 
   // Get notification icon
-  const getNotificationIcon = (type: NotificationData["type"]) => {
+  const getNotificationIcon = (type: string) => {
     switch (type) {
       case "success":
         return <CheckCircle className="w-5 h-5 text-green-600" />;
@@ -358,7 +212,7 @@ export default function Notifications() {
   };
 
   // Get priority color
-  const getPriorityColor = (priority: NotificationData["priority"]) => {
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "urgent":
         return "bg-red-100 text-red-800 border-red-200";
@@ -392,48 +246,65 @@ export default function Notifications() {
 
   // Handle notification click - opens modal and marks as read
   const handleNotificationClick = useCallback(
-    (notification: NotificationData) => {
+    async (notification: Notification) => {
       // Flatten notification data for ViewModal
       const flattenedNotification: GenericDataItem = {
         ...notification,
-        ...notification.metadata, // Spread metadata to top level
-        createdAt: notification.createdAt.toISOString(),
-        updatedAt: notification.updatedAt.toISOString(),
+        createdAt: notification.created_at,
+        updatedAt: notification.updated_at,
       };
 
-      setSelectedNotification(flattenedNotification as NotificationData);
+      setSelectedNotification(flattenedNotification as Notification);
       setIsModalOpen(true);
 
       // Mark as read if unread
-      if (!notification.isRead) {
-        setNotifications((prev) =>
-          prev.map((n) =>
-            n.id === notification.id
-              ? { ...n, isRead: true, updatedAt: new Date() }
-              : n
-          )
-        );
+      if (!notification.is_read) {
+        try {
+          await markAsReadMutation.mutateAsync(notification.id);
+          setNotifications((prev) =>
+            prev.map((n) =>
+              n.id === notification.id
+                ? { ...n, is_read: true, updated_at: new Date().toISOString() }
+                : n
+            )
+          );
+        } catch (error) {
+          console.error("Failed to mark notification as read:", error);
+        }
       }
     },
-    []
+    [markAsReadMutation]
   );
 
   // Toggle read status
   const toggleReadStatus = useCallback(
-    (id: string, event: React.MouseEvent) => {
+    async (id: number, event: React.MouseEvent) => {
       event.stopPropagation();
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n.id === id ? { ...n, isRead: !n.isRead, updatedAt: new Date() } : n
-        )
-      );
+      
+      const notification = notifications.find((n) => n.id === id);
+      if (!notification) return;
+
+      if (!notification.is_read) {
+        try {
+          await markAsReadMutation.mutateAsync(id);
+          setNotifications((prev) =>
+            prev.map((n) =>
+              n.id === id
+                ? { ...n, is_read: true, updated_at: new Date().toISOString() }
+                : n
+            )
+          );
+        } catch (error) {
+          console.error("Failed to toggle notification status:", error);
+        }
+      }
     },
-    []
+    [notifications, markAsReadMutation]
   );
 
   // Delete notification
   const deleteNotification = useCallback(
-    (id: string, event: React.MouseEvent) => {
+    (id: number, event: React.MouseEvent) => {
       event.stopPropagation();
       setNotifications((prev) => prev.filter((n) => n.id !== id));
     },
@@ -442,10 +313,20 @@ export default function Notifications() {
 
   // Mark all as read
   const markAllAsRead = useCallback(() => {
+    const unreadNotifications = notifications.filter((n) => !n.is_read);
+    
+    unreadNotifications.forEach(async (notification) => {
+      try {
+        await markAsReadMutation.mutateAsync(notification.id);
+      } catch (error) {
+        console.error("Failed to mark notification as read:", error);
+      }
+    });
+
     setNotifications((prev) =>
-      prev.map((n) => ({ ...n, isRead: true, updatedAt: new Date() }))
+      prev.map((n) => ({ ...n, is_read: true, updated_at: new Date().toISOString() }))
     );
-  }, []);
+  }, [notifications, markAsReadMutation]);
 
   // Filter and sort notifications
   const filteredAndSortedNotifications = useMemo(() => {
@@ -463,10 +344,10 @@ export default function Notifications() {
       // Other filters
       const filtersMatch = Object.entries(searchFilterState.filters).every(
         ([key, value]) => {
-          if (key === "isRead") {
-            return notification.isRead === (value === "true");
+          if (key === "is_read") {
+            return notification.is_read === (value === "true");
           }
-          return notification[key as keyof NotificationData] === value;
+          return notification[key as keyof Notification] === value;
         }
       );
 
@@ -476,8 +357,8 @@ export default function Notifications() {
     // Sort
     if (searchFilterState.sortBy) {
       filtered.sort((a, b) => {
-        const aValue = a[searchFilterState.sortBy as keyof NotificationData];
-        const bValue = b[searchFilterState.sortBy as keyof NotificationData];
+        const aValue = a[searchFilterState.sortBy as keyof Notification];
+        const bValue = b[searchFilterState.sortBy as keyof Notification];
 
         let comparison = 0;
 
@@ -488,6 +369,15 @@ export default function Notifications() {
           comparison = aValue - bValue;
         } else if (aValue instanceof Date && bValue instanceof Date) {
           comparison = aValue.getTime() - bValue.getTime();
+        } else if (typeof aValue === "string" && typeof bValue === "string") {
+          // Handle date strings
+          const aDate = new Date(aValue);
+          const bDate = new Date(bValue);
+          if (!isNaN(aDate.getTime()) && !isNaN(bDate.getTime())) {
+            comparison = aDate.getTime() - bDate.getTime();
+          } else {
+            comparison = aValue.localeCompare(bValue);
+          }
         } else {
           // Convert to string for comparison as fallback
           const aStr = String(aValue || "");
@@ -518,10 +408,10 @@ export default function Notifications() {
     setCurrentPage(1);
   }, [searchFilterState]);
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   // Show loading state during hydration
-  if (!isClient) {
+  if (!isClient || notificationsLoading) {
     return (
       <div className="p-3 md:p-6">
         <div className="flex items-center justify-center py-12">
@@ -597,14 +487,14 @@ export default function Notifications() {
               onClick={() => handleNotificationClick(notification)}
               className={cn(
                 "relative bg-white border rounded-lg p-4 cursor-pointer transition-all hover:shadow-md",
-                !notification.isRead &&
+                !notification.is_read &&
                   "border-l-4 border-l-blue-500 bg-blue-50/30"
               )}
             >
               <div className="flex items-start gap-3">
                 {/* Icon */}
                 <div className="mt-1 flex-shrink-0">
-                  {getNotificationIcon(notification.type)}
+                  {getNotificationIcon("info")} {/* Default to info since API doesn't provide type */}
                 </div>
 
                 {/* Content */}
@@ -615,12 +505,12 @@ export default function Notifications() {
                         <h4
                           className={cn(
                             "text-sm font-medium text-black truncate",
-                            !notification.isRead && "font-semibold"
+                            !notification.is_read && "font-semibold"
                           )}
                         >
                           {notification.title}
                         </h4>
-                        {!notification.isRead && (
+                        {!notification.is_read && (
                           <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0" />
                         )}
                       </div>
@@ -634,19 +524,19 @@ export default function Notifications() {
                           variant="outline"
                           className={cn(
                             "text-xs",
-                            getPriorityColor(notification.priority)
+                            getPriorityColor("medium") // Default priority
                           )}
                         >
-                          {notification.priority}
+                          Medium
                         </Badge>
 
                         <Badge variant="secondary" className="text-xs">
-                          {notification.category}
+                          General
                         </Badge>
 
                         <div className="flex items-center text-xs text-gray-500">
                           <Clock className="w-3 h-3 mr-1" />
-                          {formatTimeAgo(notification.createdAt)}
+                          {formatTimeAgo(new Date(notification.created_at))}
                         </div>
                       </div>
                     </div>
@@ -668,7 +558,7 @@ export default function Notifications() {
                           onClick={(e) => toggleReadStatus(notification.id, e)}
                         >
                           <EyeOff className="w-4 h-4 mr-2" />
-                          Mark as {notification.isRead ? "Unread" : "Read"}
+                          Mark as {notification.is_read ? "Unread" : "Read"}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem

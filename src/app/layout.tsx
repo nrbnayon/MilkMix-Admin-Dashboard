@@ -6,6 +6,8 @@ import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { layoutMetadata } from "@/lib/seo/metadata";
 import Script from "next/script";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { QueryProvider } from "@/lib/providers/QueryProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -58,8 +60,12 @@ export default function RootLayout({
           disableTransitionOnChange
           // forcedTheme='light'
         >
-          {children}
-          <Toaster richColors position="top-center" />
+          <QueryProvider>
+            <AuthProvider>
+              {children}
+              <Toaster richColors position="top-center" />
+            </AuthProvider>
+          </QueryProvider>
         </ThemeProvider>
 
         {/* Load Lordicon script asynchronously */}

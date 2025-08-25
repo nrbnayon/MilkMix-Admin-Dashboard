@@ -11,6 +11,7 @@ import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes"; // Add this import if using next-themes
 import { LogOut, PanelLeftOpen, PanelRightOpen } from "lucide-react";
 import Lordicon from "@/components/lordicon/lordicon-wrapper";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DashboardWrapperProps {
   children: React.ReactNode;
@@ -19,6 +20,7 @@ interface DashboardWrapperProps {
 export default function DashboardWrapper({ children }: DashboardWrapperProps) {
   const pathname = usePathname();
   const { theme } = useTheme(); // Add this if using next-themes
+  const { logout, user } = useAuth();
   const [open, setOpen] = React.useState(false);
   const [sidebarWidth, setSidebarWidth] = React.useState(220);
   const [isResizing, setIsResizing] = React.useState(false);
@@ -231,7 +233,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
               </div>
               <button
                 onClick={() => {
-                  console.log("Logout clicked");
+                  logout();
                 }}
                 className='w-full'
               >

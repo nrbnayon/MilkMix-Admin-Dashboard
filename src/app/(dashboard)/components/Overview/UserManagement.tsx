@@ -1,6 +1,5 @@
 // src\app\(dashboard)\components\Overview\UserManagement.tsx
 "use client";
-import { usersData } from "@/data/usersDataSets";
 import { useState } from "react";
 import type {
   GenericDataItem,
@@ -13,6 +12,7 @@ import type {
 } from "@/types/dynamicTableTypes";
 import { DynamicTable } from "@/components/common/DynamicTable";
 import { Eye, Edit } from "lucide-react";
+import { useAllUsers } from "@/hooks/useApi";
 
 interface UserManagementProps {
   itemsPerPage?: number;
@@ -27,10 +27,36 @@ export default function UserManagement({
   buttonText = "Show all",
   pageUrl = "/manage-users",
 }: UserManagementProps) {
-  const [users, setUsers] = useState<GenericDataItem[]>(
-    usersData as GenericDataItem[]
-  );
-  const [isLoading, setIsLoading] = useState(false);
+  const { data: usersResponse, isLoading, refetch } = useAllUsers();
+  const [users, setUsers] = useState<GenericDataItem[]>([]);
+
+  // Transform API data to match component expectations
+  React.useEffect(() => {
+    if (usersResponse?.success && usersResponse.data) {
+      const transformedUsers = usersResponse.data.map((user) => ({
+        id: user.id.toString(),
+        name: user.name,
+        email: user.email,
+        avatar: user.profile_picture || '',
+        status: user.is_active ? 'active' : 'inactive',
+        accountType: user.role === 'consultant' ? 'consultant' : 'free',
+        firstName: user.first_name || '',
+        lastName: user.last_name || '',
+        phone: user.phone_number || '',
+        username: user.email.split('@')[0],
+        role: user.role,
+        department: 'General',
+        joinDate: user.date_joined || new Date().toISOString(),
+        isActive: user.is_active || false,
+        permissions: ['read'],
+        accessLevel: 'basic',
+        isEmailVerified: true,
+        isTwoFactorEnabled: false,
+        createdAt: user.date_joined || new Date().toISOString(),
+      }));
+      setUsers(transformedUsers as GenericDataItem[]);
+    }
+  }, [usersResponse]);
 
   // Column Configuration for User Table
   const userColumns: ColumnConfig[] = [
@@ -352,13 +378,7 @@ export default function UserManagement({
   };
 
   const handleRefresh = () => {
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setUsers([...usersData] as GenericDataItem[]);
-      setIsLoading(false);
-      console.log("Users data refreshed");
-    }, 1000);
+    refetch();
   };
 
   return (
