@@ -1,10 +1,10 @@
 // src/app/unauthorized/page.tsx
-'use client';
-import React from 'react';
-import Link from 'next/link';
-import { Shield, ArrowLeft, Home } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
+"use client";
+import React from "react";
+import Link from "next/link";
+import { Shield, ArrowLeft, Home } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function UnauthorizedPage() {
   const { user, logout } = useAuth();
@@ -25,17 +25,16 @@ export default function UnauthorizedPage() {
         </div>
 
         {/* Content */}
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">
-          Access Denied
-        </h1>
-        
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">Access Denied</h1>
+
         <p className="text-gray-600 mb-2">
-          You don't have permission to access this page.
+          You don&apos;t have permission to access this page.
         </p>
-        
+
         {user && (
           <p className="text-sm text-gray-500 mb-8">
-            Current role: <span className="font-medium capitalize">{user.role}</span>
+            Current role:{" "}
+            <span className="font-medium capitalize">{user.role}</span>
           </p>
         )}
 
@@ -50,7 +49,7 @@ export default function UnauthorizedPage() {
               <ArrowLeft className="w-4 h-4" />
               Go Back
             </Button>
-            
+
             <Link href="/overview">
               <Button className="flex items-center gap-2 w-full sm:w-auto">
                 <Home className="w-4 h-4" />

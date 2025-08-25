@@ -1,6 +1,5 @@
-// src\app\(dashboard)\components\Advertisements\ManagementAds.tsx
+// src/app/(dashboard)/components/Advertisements/ManagementAds.tsx
 "use client";
-import { adsData, AdsDataItem } from "@/data/adsData";
 import { useState } from "react";
 import type {
   GenericDataItem,
@@ -15,6 +14,26 @@ import { DynamicDataCreateModal } from "@/components/common/DynamicDataCreateMod
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Lordicon from "@/components/lordicon/lordicon-wrapper";
+import {
+  useAdvertisements,
+  useCreateAdvertisement,
+  useUpdateAdvertisement,
+  useDeleteAdvertisement,
+} from "@/hooks/useAdvertisements";
+import { Advertisement } from "@/lib/api/advertisements";
+import { getProfilePictureUrl } from "@/utils/imageUtils";
+
+interface AdsDataItem extends GenericDataItem {
+  id: string; // Changed from number to string
+  title: string;
+  external_link: string;
+  image: string;
+  target_user: string;
+  status: string;
+  start_date: string;
+  end_date: string;
+  created_at: string;
+}
 
 interface AdsManagementProps {
   itemsPerPage?: number;
@@ -29,14 +48,41 @@ export default function ManagementAds({
   title = "All Ads",
   showAds = 4,
 }: AdsManagementProps) {
-  const [ads, setAds] = useState(adsData);
-  const [isLoading] = useState(false);
+  const { data: apiAds, isLoading } = useAdvertisements();
+  const createMutation = useCreateAdvertisement();
+  const updateMutation = useUpdateAdvertisement();
+  const deleteMutation = useDeleteAdvertisement();
+
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingAd, setEditingAd] = useState<AdsDataItem | null>(null);
 
-  // Check if we should show Add Ads button
+  // Transform API data to component data format
+  const ads: AdsDataItem[] =
+    apiAds?.map((ad: Advertisement) => ({
+      id: String(ad.id),
+      title: ad.title,
+      external_link: ad.external_link,
+      image: getProfilePictureUrl(ad.image),
+      target_user: ad.target_user,
+      status: ad.status,
+      start_date: ad.start_date,
+      end_date: ad.end_date,
+      created_at: ad.created_at,
+      targetUsers: ad.target_user,
+      startDate: ad.start_date,
+      endDate: ad.end_date,
+      createdAt: ad.created_at,
+      externalLinks: { url: ad.external_link },
+      views: 0,
+      author: "Admin",
+    })) || [];
+
+  console.log("Fetched all ads:", ads);
+
+  // Check if we should show Add Ads button - Fixed logic
   const shouldShowAddButton = ads.length < showAds;
+  console.log("Should show Add Ads button:", shouldShowAddButton, "Current ads:", ads.length, "Max ads:", showAds);
 
   // Column Configuration for Ads
   const adsColumns: ColumnConfig[] = [
@@ -52,8 +98,8 @@ export default function ManagementAds({
             <Image
               src={
                 typeof item.image === "string" && item.image.trim() !== ""
-                  ? item.image
-                  : ""
+                  ? getProfilePictureUrl(item.image)
+                  : "/placeholder.svg"
               }
               alt={String(value)}
               className="w-full h-full object-cover"
@@ -63,49 +109,62 @@ export default function ManagementAds({
           </div>
           <div className="min-w-0 flex-1">
             <p className="font-medium text-sm truncate">{String(value)}</p>
-            {typeof item.subtitle === "string" && item.subtitle && (
-              <p className="text-xs text-gray-500 truncate">{item.subtitle}</p>
-            )}
           </div>
         </div>
       ),
     },
     {
-      key: "description",
-      label: "Description",
-      type: "textarea",
+      key: "external_link",
+      label: "External Link",
       sortable: false,
-      searchable: true,
+      render: (value) => {
+        const link = value as string;
+        if (!link || link.trim() === "") {
+          return <span className="text-gray-400">No link</span>;
+        }
+        return (
+          <a
+            href={link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline text-sm truncate max-w-32 block"
+          >
+            {link}
+          </a>
+        );
+      },
     },
     {
-      key: "image",
-      label: "Image",
-      type: "image",
-      sortable: false,
-    },
-    {
-      key: "targetUsers",
+      key: "target_user",
       label: "Target Users",
       type: "select",
       sortable: true,
       filterable: true,
       options: [
-        { value: "new", label: "New Users", color: "#3b82f6", icon: "👋" },
-        { value: "old", label: "Old Users", color: "#10b981", icon: "🤝" },
-        { value: "both", label: "All Users", color: "#8b5cf6", icon: "👥" },
+        { value: "New User", label: "New Users", color: "#3b82f6", icon: "👋" },
+        { value: "Old User", label: "Old Users", color: "#10b981", icon: "🤝" },
+        { value: "All User", label: "All Users", color: "#8b5cf6", icon: "👥" },
       ],
     },
     {
-      key: "startDate",
+      key: "start_date",
       label: "Start Date",
       type: "date",
       sortable: true,
+      render: (value) => {
+        const date = new Date(value as string);
+        return date.toLocaleDateString();
+      },
     },
     {
-      key: "endDate",
+      key: "end_date",
       label: "End Date",
       type: "date",
       sortable: true,
+      render: (value) => {
+        const date = new Date(value as string);
+        return date.toLocaleDateString();
+      },
     },
     {
       key: "status",
@@ -114,67 +173,22 @@ export default function ManagementAds({
       sortable: true,
       filterable: true,
       options: [
-        { value: "active", label: "Active", color: "#16a34a" },
-        { value: "inactive", label: "Inactive", color: "#ca8a04" },
-        { value: "draft", label: "Draft", color: "#6b7280" },
-        { value: "scheduled", label: "Scheduled", color: "#3b82f6" },
-        { value: "expired", label: "Expired", color: "#dc2626" },
+        { value: "Active", label: "Active", color: "#16a34a" },
+        { value: "Inactive", label: "Inactive", color: "#ca8a04" },
+        { value: "Draft", label: "Draft", color: "#6b7280" },
+        { value: "Scheduled", label: "Scheduled", color: "#3b82f6" },
+        { value: "Expired", label: "Expired", color: "#dc2626" },
       ],
     },
     {
-      key: "tags",
-      label: "Tags",
-      sortable: false,
-      searchable: true,
-    },
-    {
-      key: "keywords",
-      label: "Keywords",
-      sortable: false,
-      searchable: true,
-    },
-    {
-      key: "category",
-      label: "Category",
-      type: "select",
-      sortable: true,
-      filterable: true,
-    },
-    {
-      key: "externalLinks",
-      label: "External Link",
-      sortable: false,
-      render: (value) => {
-        const externalLinks = value as AdsDataItem["externalLinks"];
-        if (!externalLinks || Object.keys(externalLinks).length === 0) {
-          return <span className="text-gray-400">No links</span>;
-        }
-        const linkCount = Object.keys(externalLinks).length;
-        return (
-          <div className="flex items-center gap-1">
-            <div className="flex -space-x-1">
-              {externalLinks.url && (
-                <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs">
-                  🌍
-                </div>
-              )}
-            </div>
-            <span className="text-xs text-gray-500 ml-1">{linkCount}</span>
-          </div>
-        );
-      },
-    },
-    {
-      key: "createdAt",
+      key: "created_at",
       label: "Created At",
       type: "date",
       sortable: true,
-    },
-    {
-      key: "views",
-      label: "Views",
-      type: "number",
-      sortable: true,
+      render: (value) => {
+        const date = new Date(value as string);
+        return date.toLocaleDateString();
+      },
     },
   ];
 
@@ -182,10 +196,9 @@ export default function ManagementAds({
   const cardConfig: CardConfig = {
     titleKey: "title",
     imageKey: "image",
-    descriptionKey: "description",
     statusKey: "status",
-    badgeKeys: ["targetUsers"],
-    metaKeys: ["createdAt", "author", "views"],
+    badgeKeys: ["target_user"],
+    metaKeys: ["created_at"],
     showDetailsButton: true,
     primaryAction: {
       key: "edit",
@@ -197,22 +210,13 @@ export default function ManagementAds({
 
   // Search Filter Configuration
   const searchFilterConfig: SearchFilterConfig = {
-    searchPlaceholder: "Search ads by title, description, category...",
-    searchKeys: [
-      "title",
-      "subtitle",
-      "description",
-      "category",
-      "author",
-      "tags",
-      "keywords",
-    ],
+    searchPlaceholder: "Search ads by title, status...",
+    searchKeys: ["title", "status", "target_user"],
     enableSort: true,
     sortOptions: [
       { key: "title", label: "Title" },
-      { key: "createdAt", label: "Created Date" },
-      { key: "startDate", label: "Start Date" },
-      { key: "views", label: "Views" },
+      { key: "created_at", label: "Created Date" },
+      { key: "start_date", label: "Start Date" },
     ],
     filters: [
       {
@@ -220,33 +224,22 @@ export default function ManagementAds({
         label: "Status",
         type: "select",
         options: [
-          { value: "active", label: "Active" },
-          { value: "inactive", label: "Inactive" },
-          { value: "draft", label: "Draft" },
-          { value: "scheduled", label: "Scheduled" },
-          { value: "expired", label: "Expired" },
+          { value: "Active", label: "Active" },
+          { value: "Inactive", label: "Inactive" },
+          { value: "Draft", label: "Draft" },
+          { value: "Scheduled", label: "Scheduled" },
+          { value: "Expired", label: "Expired" },
         ],
       },
       {
-        key: "targetUsers",
+        key: "target_user",
         label: "Target Users",
         type: "select",
         options: [
-          { value: "new", label: "New Users" },
-          { value: "old", label: "Old Users" },
-          { value: "both", label: "All Users" },
+          { value: "New User", label: "New Users" },
+          { value: "Old User", label: "Old Users" },
+          { value: "All User", label: "All Users" },
         ],
-      },
-      {
-        key: "category",
-        label: "Category",
-        type: "select",
-        options: Array.from(new Set(adsData.map((ad) => ad.category))).map(
-          (cat) => ({
-            value: cat,
-            label: cat,
-          })
-        ),
       },
     ],
   };
@@ -289,13 +282,12 @@ export default function ManagementAds({
         />
       ),
       variant: "ghost",
-      onClick: (item) => handleDeleteAd(item.id),
+      onClick: (item) => handleDeleteAd(Number(item.id)), // Convert back to number for API
     },
   ];
 
   // Form Fields Configuration
   const createFormFields: FormField[] = [
-    // Basic Information Section
     {
       key: "title",
       label: "Ad Title",
@@ -313,61 +305,29 @@ export default function ManagementAds({
       key: "image",
       label: "Ad Image",
       type: "image",
-      required: true,
+      required: false,
       section: "basic",
       gridCol: "full",
     },
-    // Content Section
     {
-      key: "description",
-      label: "Description",
-      type: "textarea",
-      required: true,
-      placeholder: "Enter ad description with markdown support...",
-      section: "content",
+      key: "external_link",
+      label: "External Link",
+      type: "url",
+      required: false,
+      placeholder: "https://example.com",
+      section: "basic",
       gridCol: "full",
     },
-    // Targeting Section
     {
-      key: "targetUsers",
+      key: "target_user",
       label: "Target Users",
       type: "select",
-      required: true,
+      required: false,
       options: [
-        { value: "new", label: "New Users" },
-        { value: "old", label: "Old Users" },
-        { value: "both", label: "All Users" },
+        { value: "New User", label: "New Users" },
+        { value: "Old User", label: "Old Users" },
+        { value: "All User", label: "All Users" },
       ],
-      section: "targeting",
-      gridCol: "half",
-    },
-    {
-      key: "category",
-      label: "Category",
-      type: "select",
-      required: true,
-      options: Array.from(new Set(adsData.map((ad) => ad.category))).map(
-        (cat) => ({
-          value: cat,
-          label: cat,
-        })
-      ),
-      section: "targeting",
-      gridCol: "half",
-    },
-    {
-      key: "startDate",
-      label: "Start Date",
-      type: "date",
-      required: true,
-      section: "targeting",
-      gridCol: "half",
-    },
-    {
-      key: "endDate",
-      label: "End Date",
-      type: "date",
-      required: true,
       section: "targeting",
       gridCol: "half",
     },
@@ -375,47 +335,31 @@ export default function ManagementAds({
       key: "status",
       label: "Status",
       type: "select",
-      required: true,
+      required: false,
       options: [
-        { value: "active", label: "Active" },
-        { value: "draft", label: "Draft" },
-        { value: "scheduled", label: "Scheduled" },
-        { value: "inactive", label: "Inactive" },
+        { value: "Active", label: "Active" },
+        { value: "Inactive", label: "Inactive" },
+        { value: "Draft", label: "Draft" },
+        { value: "Scheduled", label: "Scheduled" },
       ],
       section: "targeting",
       gridCol: "half",
     },
-    // SEO Section
     {
-      key: "tags",
-      label: "Tags",
-      type: "text",
+      key: "start_date",
+      label: "Start Date",
+      type: "datetime-local",
       required: false,
-      placeholder:
-        "Enter tags separated by commas (e.g., technology, innovation)",
-      section: "seo",
-      gridCol: "full",
-      helpText: "Separate multiple tags with commas",
+      section: "targeting",
+      gridCol: "half",
     },
     {
-      key: "keywords",
-      label: "Keywords",
-      type: "text",
+      key: "end_date",
+      label: "End Date",
+      type: "datetime-local",
       required: false,
-      placeholder: "Enter keywords separated by commas for SEO",
-      section: "seo",
-      gridCol: "full",
-      helpText: "Separate multiple keywords with commas",
-    },
-    // Social Links Section - Fixed with proper field names
-    {
-      key: "externalLinks.url",
-      label: "External Link",
-      type: "url",
-      required: false,
-      placeholder: "https://website.com/company",
-      section: "social",
-      gridCol: "full",
+      section: "targeting",
+      gridCol: "half",
     },
   ];
 
@@ -428,205 +372,135 @@ export default function ManagementAds({
       icon: "📝",
     },
     {
-      key: "content",
-      title: "Content & Media",
-      description: "Add description and images for the ad",
-      icon: "🎨",
-    },
-    {
       key: "targeting",
       title: "Targeting & Scheduling",
       description: "Configure target audience and publication schedule",
       icon: "🎯",
     },
-    {
-      key: "seo",
-      title: "SEO & Tags",
-      description: "Add tags and keywords for better discoverability",
-      icon: "🔍",
-      collapsible: true,
-      defaultCollapsed: true,
-    },
-    {
-      key: "social",
-      title: "Social & External Links",
-      description: "Add social media and external links (optional)",
-      icon: "🔗",
-      collapsible: true,
-      defaultCollapsed: true,
-    },
   ];
 
-  // Utility function to process form data and extract social links
-  const processFormData = (data: Record<string, unknown>) => {
-    const processedData: Record<string, unknown> = {};
-    const externalLinks: Record<string, string> = {};
-
-    // Process each field
-    Object.entries(data).forEach(([key, value]) => {
-      if (key.startsWith("externalLinks.")) {
-        // Extract social link field
-        const socialKey = key.replace("externalLinks.", "");
-        if (typeof value === "string" && value.trim()) {
-          externalLinks[socialKey] = value.trim();
-        }
-      } else {
-        // Regular field
-        processedData[key] = value;
-      }
-    });
-
-    // Add externalLinks object if there are any social links
-    if (Object.keys(externalLinks).length > 0) {
-      processedData.externalLinks = externalLinks;
-    }
-
-    return processedData;
-  };
-
-  // Utility function to process tags and keywords
-  const processTags = (value: unknown): string[] => {
-    if (typeof value === "string" && value.trim()) {
-      return value
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter((tag) => tag.length > 0);
-    }
-    return [];
-  };
-
   // Handle creating new ad
-  const handleCreateAd = (data: Record<string, unknown>) => {
-    const processedData = processFormData(data);
+  const handleCreateAd = async (data: Record<string, unknown>) => {
+    try {
+      console.log("Creating ad with data:", data);
+      
+      const imageFile =
+        Array.isArray(data.image) && data.image.length > 0
+          ? (data.image[0] as File)
+          : (data.image as File);
 
-    // Handle image - single image only for ads
-    const imageValue =
-      Array.isArray(processedData.image) && processedData.image.length > 0
-        ? processedData.image[0]
-        : typeof processedData.image === "string"
-        ? processedData.image
-        : "";
+      if (!imageFile || !(imageFile instanceof File)) {
+        console.error("No valid image file provided");
+        return;
+      }
 
-    const newAdData = {
-      id: `ad${Date.now()}`,
-      title: String(processedData.title || ""),
-      subtitle: processedData.subtitle
-        ? String(processedData.subtitle)
-        : undefined,
-      description: String(processedData.description || ""),
-      image:
-        imageValue ||
-        `https://images.unsplash.com/photo-1557804506-669a67965ba0?w=400&h=300&fit=crop`,
-      targetUsers: String(processedData.targetUsers || "both") as
-        | "new"
-        | "old"
-        | "both",
-      startDate: String(processedData.startDate || new Date().toISOString()),
-      endDate: String(
-        processedData.endDate ||
-          new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-      ),
-      status: String(processedData.status || "draft") as
-        | "active"
-        | "inactive"
-        | "draft"
-        | "scheduled"
-        | "expired",
-      tags: processTags(processedData.tags),
-      keywords: processTags(processedData.keywords),
-      category: String(processedData.category || "General"),
-      externalLinks:
-        processedData.externalLinks as AdsDataItem["externalLinks"],
-      createdAt: new Date().toISOString(),
-      isActive: String(processedData.status || "draft") === "active",
-      author: "Current User",
-      views: 0,
-    };
+      const createData = {
+        title: String(data.title || ""),
+        external_link: String(data.external_link || ""),
+        image: imageFile,
+        target_user: String(data.target_user || "All User"),
+        status: String(data.status || "Draft"),
+        start_date: new Date(data.start_date as string).toISOString(),
+        end_date: new Date(data.end_date as string).toISOString(),
+      };
 
-    const updatedAds = [newAdData, ...ads];
-    setAds(updatedAds);
-    console.log("New ad created:", newAdData);
+      console.log("Sending create data:", createData);
+
+      await createMutation.mutateAsync(createData);
+      setCreateModalOpen(false);
+      console.log("Advertisement created successfully");
+    } catch (error) {
+      console.error("Failed to create advertisement:", error);
+    }
   };
 
   // Handle editing ad
   const handleEditAd = (ad: AdsDataItem) => {
+    console.log("Editing ad:", ad);
     setEditingAd(ad);
     setEditModalOpen(true);
   };
 
   // Handle updating ad
-  const handleUpdateAd = (data: Record<string, unknown>) => {
+  const handleUpdateAd = async (data: Record<string, unknown>) => {
     if (!editingAd) return;
 
-    const processedData = processFormData(data);
+    try {
+      console.log("Updating ad with data:", data);
+      console.log("Current editing ad:", editingAd);
 
-    // Handle image
-    const imageValue =
-      Array.isArray(processedData.image) && processedData.image.length > 0
-        ? processedData.image[0]
-        : typeof processedData.image === "string"
-        ? processedData.image
-        : editingAd.image;
+      const updateData: Record<string, unknown> = {};
 
-    const updatedAdData = {
-      ...editingAd,
-      title: String(processedData.title || ""),
-      subtitle: processedData.subtitle
-        ? String(processedData.subtitle)
-        : undefined,
-      description: String(processedData.description || ""),
-      image: imageValue,
-      targetUsers: String(processedData.targetUsers || "both") as
-        | "new"
-        | "old"
-        | "both",
-      startDate: String(processedData.startDate || editingAd.startDate),
-      endDate: String(processedData.endDate || editingAd.endDate),
-      status: String(processedData.status || "draft") as
-        | "active"
-        | "inactive"
-        | "draft"
-        | "scheduled"
-        | "expired",
-      tags: processTags(processedData.tags),
-      keywords: processTags(processedData.keywords),
-      category: String(processedData.category || "General"),
-      externalLinks:
-        processedData.externalLinks as AdsDataItem["externalLinks"],
-      updatedAt: new Date().toISOString(),
-      isActive: String(processedData.status || "draft") === "active",
-    };
+      // Only include fields that have changed
+      if (data.title && data.title !== editingAd.title) {
+        updateData.title = String(data.title);
+      }
+      if (data.external_link && data.external_link !== editingAd.external_link) {
+        updateData.external_link = String(data.external_link);
+      }
+      if (data.target_user && data.target_user !== editingAd.target_user) {
+        updateData.target_user = String(data.target_user);
+      }
+      if (data.status && data.status !== editingAd.status) {
+        updateData.status = String(data.status);
+      }
+      if (data.start_date) {
+        updateData.start_date = new Date(data.start_date as string).toISOString();
+      }
+      if (data.end_date) {
+        updateData.end_date = new Date(data.end_date as string).toISOString();
+      }
 
-    const updatedAds = ads.map((ad) =>
-      ad.id === editingAd.id ? updatedAdData : ad
-    );
-    setAds(updatedAds);
-    setEditingAd(null);
-    console.log("Ad updated:", updatedAdData);
+      // Handle image update
+      if (data.image) {
+        const imageFile =
+          Array.isArray(data.image) && data.image.length > 0
+            ? (data.image[0] as File)
+            : (data.image as File);
+
+        if (imageFile instanceof File) {
+          updateData.image = imageFile;
+        }
+      }
+
+      console.log("Sending update data:", updateData);
+
+      await updateMutation.mutateAsync({
+        id: Number(editingAd.id), // Convert back to number for API
+        data: updateData,
+      });
+      
+      setEditModalOpen(false);
+      setEditingAd(null);
+      console.log("Advertisement updated successfully");
+    } catch (error) {
+      console.error("Failed to update advertisement:", error);
+    }
   };
 
   // Handle deleting ad
-  const handleDeleteAd = (adId: string) => {
-    const updatedAds = ads.filter((ad) => ad.id !== adId);
-    setAds(updatedAds);
-    console.log("Ad deleted:", adId);
-  };
-
-  // Handle data change from DynamicCard3D
-  const handleDataChange = (newData: GenericDataItem[]) => {
-    setAds(newData as AdsDataItem[]);
+  const handleDeleteAd = async (adId: number) => {
+    try {
+      console.log("Deleting ad with id:", adId);
+      await deleteMutation.mutateAsync(adId);
+      console.log("Advertisement deleted successfully");
+    } catch (error) {
+      console.error("Failed to delete advertisement:", error);
+    }
   };
 
   // Prepare initial data for edit modal
   const getEditInitialData = () => {
     if (!editingAd) return {};
 
-    const externalLinksData = editingAd.externalLinks || {};
     return {
-      ...editingAd,
-      tags: editingAd.tags?.join(", ") || "",
-      keywords: editingAd.keywords?.join(", ") || "",
-      "externalLinks.url": externalLinksData.url || "",
+      title: editingAd.title,
+      image: getProfilePictureUrl(editingAd.image),
+      external_link: editingAd.external_link,
+      target_user: editingAd.target_user,
+      status: editingAd.status,
+      start_date: new Date(editingAd.start_date).toISOString().slice(0, 16),
+      end_date: new Date(editingAd.end_date).toISOString().slice(0, 16),
     };
   };
 
@@ -664,8 +538,12 @@ export default function ManagementAds({
         cardConfig={cardConfig}
         actions={adActions}
         searchFilterConfig={searchFilterConfig}
-        onDataChange={handleDataChange}
-        loading={isLoading}
+        loading={
+          isLoading ||
+          createMutation.isPending ||
+          updateMutation.isPending ||
+          deleteMutation.isPending
+        }
         emptyMessage="No ads found"
         itemsPerPage={itemsPerPage}
       />
@@ -676,16 +554,16 @@ export default function ManagementAds({
         onClose={() => setCreateModalOpen(false)}
         onSave={handleCreateAd}
         title="Create New Ad"
-        description="Create and publish ads with rich content and social media integration"
+        description="Create and publish ads with rich content"
         fields={createFormFields}
         sections={createModalSections}
         initialData={{
-          status: "active",
-          targetUsers: "both",
-          startDate: new Date().toISOString().split("T")[0],
-          endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+          status: "Active",
+          target_user: "All User",
+          start_date: new Date().toISOString().slice(0, 16),
+          end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
             .toISOString()
-            .split("T")[0],
+            .slice(0, 16),
         }}
         saveButtonText="Create Ad"
         cancelButtonText="Cancel"

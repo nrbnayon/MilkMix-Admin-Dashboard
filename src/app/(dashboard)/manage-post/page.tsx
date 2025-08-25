@@ -5,7 +5,7 @@ import ManagementPosts from "../components/Posts/ManagementPosts";
 export default function ManagePostsPage() {
   return (
     <div>
-      <DashboardHeader title="Welcome Nayon" />
+      <DashboardHeader title="Welcome" />
       <div className="p-2 md:p-6">
         <ManagementPosts itemsPerPage={8} title="All Posts" />
       </div>
