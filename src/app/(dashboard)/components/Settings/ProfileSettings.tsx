@@ -59,8 +59,11 @@ export default function ProfileSettings() {
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      full_name: user?.user_profile?.name || "",
-      phone: user?.user_profile?.phone_number || "",
+      full_name:
+        user?.name ||
+        `${user?.first_name || ""} ${user?.last_name || ""}`.trim() ||
+        "",
+      phone: user?.phone_number || "",
       bio: "",
       location: "",
     },
@@ -149,8 +152,8 @@ export default function ProfileSettings() {
     if (profileImage) {
       return profileImage;
     }
-    if (user?.user_profile?.profile_picture) {
-      return getProfilePictureUrl(user.user_profile.profile_picture);
+    if (user?.profile_picture) {
+      return getProfilePictureUrl(user.profile_picture);
     }
     return null;
   };

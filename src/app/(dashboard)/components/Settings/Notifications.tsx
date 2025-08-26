@@ -89,7 +89,7 @@ export default function Notifications() {
   const markAsReadMutation = useMarkNotificationAsRead();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [selectedNotification, setSelectedNotification] =
-    useState<Notification | null>(null);
+    useState<GenericDataItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isClient, setIsClient] = useState(false);
@@ -235,14 +235,19 @@ export default function Notifications() {
   // Handle notification click - opens modal and marks as read
   const handleNotificationClick = useCallback(
     async (notification: Notification) => {
-      // Flatten notification data for ViewModal
+      // Flatten notification data for ViewModal - convert id to string
       const flattenedNotification: GenericDataItem = {
         ...notification,
+        id: notification.id.toString(),
         createdAt: notification.created_at,
         updatedAt: notification.updated_at,
+        isRead: notification.is_read,
+        type: "info", // Default type since API doesn't provide
+        priority: "medium", // Default priority
+        category: "General", // Default category
       };
 
-      setSelectedNotification(flattenedNotification as Notification);
+      setSelectedNotification(flattenedNotification);
       setIsModalOpen(true);
 
       // Mark as read if unread
@@ -356,13 +361,7 @@ export default function Notifications() {
 
         // Handle different types properly
         if (typeof aValue === "string" && typeof bValue === "string") {
-          comparison = aValue.localeCompare(bValue);
-        } else if (typeof aValue === "number" && typeof bValue === "number") {
-          comparison = aValue - bValue;
-        } else if (aValue instanceof Date && bValue instanceof Date) {
-          comparison = aValue.getTime() - bValue.getTime();
-        } else if (typeof aValue === "string" && typeof bValue === "string") {
-          // Handle date strings
+          // Check if these are date strings first
           const aDate = new Date(aValue);
           const bDate = new Date(bValue);
           if (!isNaN(aDate.getTime()) && !isNaN(bDate.getTime())) {
@@ -370,6 +369,10 @@ export default function Notifications() {
           } else {
             comparison = aValue.localeCompare(bValue);
           }
+        } else if (typeof aValue === "number" && typeof bValue === "number") {
+          comparison = aValue - bValue;
+        } else if (typeof aValue === "boolean" && typeof bValue === "boolean") {
+          comparison = aValue === bValue ? 0 : aValue ? 1 : -1;
         } else {
           // Convert to string for comparison as fallback
           const aStr = String(aValue || "");

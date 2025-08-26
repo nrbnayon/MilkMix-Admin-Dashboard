@@ -250,7 +250,11 @@ export default function VerifyOtp() {
                     maxLength={6}
                     value={otp}
                     onChange={handleOtpChange}
-                    disabled={isLoading || timeLeft === 0}
+                    disabled={
+                      verifyOTPMutation.isPending ||
+                      isSubmitting ||
+                      timeLeft === 0
+                    }
                   >
                     <InputOTPGroup className="gap-1 sm:gap-2">
                       <InputOTPSlot
@@ -314,7 +318,7 @@ export default function VerifyOtp() {
                   timeLeft === 0
                 }
               >
-                {verifyOTPMutation.isPending ? (
+                {verifyOTPMutation.isPending || isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     <span className="hidden sm:inline">Verifying...</span>
