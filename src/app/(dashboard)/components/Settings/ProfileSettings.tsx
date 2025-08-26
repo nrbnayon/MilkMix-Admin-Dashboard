@@ -8,13 +8,13 @@ import {
   Edit3,
   Save,
   X,
-  User,
   MapPin,
   Phone,
   FileText,
   Mail,
   Trash2,
   LogOut,
+  User2,
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUpdateProfile } from "@/hooks/useApi";
 import { toast } from "sonner";
 import { getProfilePictureUrl } from "@/utils/imageUtils";
+import { User } from "@/types/api";
 
 // Validation schema
 const profileSchema = z.object({
@@ -48,8 +49,17 @@ export default function ProfileSettings() {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { user, logout, updateUser } = useAuth();
   const updateProfileMutation = useUpdateProfile();
+
+  const {
+    user,
+    logout,
+    updateUser,
+  }: {
+    user: User | null;
+    logout: () => void;
+    updateUser: (user: User) => void;
+  } = useAuth();
 
   const {
     register,
@@ -59,15 +69,14 @@ export default function ProfileSettings() {
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      full_name:
-        user?.name ||
-        `${user?.first_name || ""} ${user?.last_name || ""}`.trim() ||
-        "",
-      phone: user?.phone_number || "",
+      full_name: user?.user_profile?.name || "",
+      phone: user?.user_profile?.phone_number || "",
       bio: "",
       location: "",
     },
   });
+
+  console.log("User data in profile settings:", user);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -152,8 +161,8 @@ export default function ProfileSettings() {
     if (profileImage) {
       return profileImage;
     }
-    if (user?.profile_picture) {
-      return getProfilePictureUrl(user.profile_picture);
+    if (user?.user_profile?.profile_picture) {
+      return getProfilePictureUrl(user.user_profile.profile_picture);
     }
     return null;
   };
@@ -358,7 +367,7 @@ export default function ProfileSettings() {
                   <div className="space-y-3">
                     <label className="flex items-center gap-3 text-sm font-medium text-slate-700">
                       <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <User className="w-4 h-4 text-blue-600" />
+                        <User2 className="w-4 h-4 text-blue-600" />
                       </div>
                       Full Name
                     </label>

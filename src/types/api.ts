@@ -1,4 +1,10 @@
 // src/types/api.ts
+export interface UserProfile {
+  name?: string;
+  phone_number?: string;
+  profile_picture?: string;
+}
+
 export interface User {
   id: number;
   name: string;
@@ -11,6 +17,7 @@ export interface User {
   is_active?: boolean;
   date_joined?: string;
   last_login?: string;
+  user_profile?: UserProfile;
   [key: string]: unknown;
 }
 
