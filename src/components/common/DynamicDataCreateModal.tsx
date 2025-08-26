@@ -169,6 +169,7 @@ export function DynamicDataCreateModal({
         handleImageFile(file, fieldKey);
       });
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [formData, maxImageUpload] // Added proper dependencies
   );
 
