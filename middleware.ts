@@ -183,10 +183,10 @@ export async function middleware(request: NextRequest) {
   }
 
   // Handle OTP verification route
-  if (pathname === "//verify-otp") {
-    // Allow access but could add additional checks here
-    return response;
-  }
+  // if (pathname === "//verify-otp") {
+  //   // Allow access but could add additional checks here
+  //   return response;
+  // }
 
   // For all other routes not explicitly defined, require authentication
   if (!user) {

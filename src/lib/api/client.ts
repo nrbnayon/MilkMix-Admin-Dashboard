@@ -1,5 +1,5 @@
 // src/lib/api/client.ts
-import { API_CONFIG, HTTP_STATUS } from './config';
+import { API_CONFIG } from "./config";
 
 export interface ApiResponse<T = unknown> {
   data?: T;
@@ -25,20 +25,20 @@ class ApiClient {
   }
 
   private getAuthToken(): string | null {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('auth-token');
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("auth-token");
   }
 
   private getHeaders(includeAuth = true): HeadersInit {
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      "Content-Type": "application/json",
+      Accept: "application/json",
     };
 
     if (includeAuth) {
       const token = this.getAuthToken();
       if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+        headers["Authorization"] = `Bearer ${token}`;
       }
     }
 
@@ -46,11 +46,13 @@ class ApiClient {
   }
 
   private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
-    const isJson = response.headers.get('content-type')?.includes('application/json');
-    
+    const isJson = response.headers
+      .get("content-type")
+      ?.includes("application/json");
+
     try {
       const data = isJson ? await response.json() : await response.text();
-      
+
       if (response.ok) {
         return {
           data: isJson ? data : { message: data },
@@ -60,9 +62,9 @@ class ApiClient {
       }
 
       // Handle error responses
-      const errorMessage = isJson 
-        ? data.message || data.error || data.detail || 'An error occurred'
-        : data || 'An error occurred';
+      const errorMessage = isJson
+        ? data.message || data.error || data.detail || "An error occurred"
+        : data || "An error occurred";
 
       return {
         error: errorMessage,
@@ -70,8 +72,9 @@ class ApiClient {
         success: false,
       };
     } catch (error) {
+      console.error("Error parsing response:", error);
       return {
-        error: 'Failed to parse response',
+        error: "Failed to parse response",
         status: response.status,
         success: false,
       };
@@ -84,7 +87,7 @@ class ApiClient {
     includeAuth = true
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
-    
+
     const config: RequestInit = {
       ...options,
       headers: {
@@ -99,17 +102,17 @@ class ApiClient {
       return await this.handleResponse<T>(response);
     } catch (error) {
       if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          throw new Error('Request timeout');
+        if (error.name === "AbortError") {
+          throw new Error("Request timeout");
         }
         throw new Error(error.message);
       }
-      throw new Error('Network error occurred');
+      throw new Error("Network error occurred");
     }
   }
 
   async get<T>(endpoint: string, includeAuth = true): Promise<ApiResponse<T>> {
-    return this.makeRequest<T>(endpoint, { method: 'GET' }, includeAuth);
+    return this.makeRequest<T>(endpoint, { method: "GET" }, includeAuth);
   }
 
   async post<T>(
@@ -120,7 +123,7 @@ class ApiClient {
     return this.makeRequest<T>(
       endpoint,
       {
-        method: 'POST',
+        method: "POST",
         body: data ? JSON.stringify(data) : undefined,
       },
       includeAuth
@@ -135,15 +138,18 @@ class ApiClient {
     return this.makeRequest<T>(
       endpoint,
       {
-        method: 'PUT',
+        method: "PUT",
         body: data ? JSON.stringify(data) : undefined,
       },
       includeAuth
     );
   }
 
-  async delete<T>(endpoint: string, includeAuth = true): Promise<ApiResponse<T>> {
-    return this.makeRequest<T>(endpoint, { method: 'DELETE' }, includeAuth);
+  async delete<T>(
+    endpoint: string,
+    includeAuth = true
+  ): Promise<ApiResponse<T>> {
+    return this.makeRequest<T>(endpoint, { method: "DELETE" }, includeAuth);
   }
 
   async postFormData<T>(
@@ -152,18 +158,18 @@ class ApiClient {
     includeAuth = true
   ): Promise<ApiResponse<T>> {
     const headers: HeadersInit = {};
-    
+
     if (includeAuth) {
       const token = this.getAuthToken();
       if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+        headers["Authorization"] = `Bearer ${token}`;
       }
     }
 
     return this.makeRequest<T>(
       endpoint,
       {
-        method: 'POST',
+        method: "POST",
         body: formData,
         headers,
       },

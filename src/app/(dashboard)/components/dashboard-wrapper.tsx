@@ -20,7 +20,7 @@ interface DashboardWrapperProps {
 export default function DashboardWrapper({ children }: DashboardWrapperProps) {
   const pathname = usePathname();
   const { theme } = useTheme(); // Add this if using next-themes
-  const { logout, user } = useAuth();
+  const { logout } = useAuth();
   const [open, setOpen] = React.useState(false);
   const [sidebarWidth, setSidebarWidth] = React.useState(220);
   const [isResizing, setIsResizing] = React.useState(false);

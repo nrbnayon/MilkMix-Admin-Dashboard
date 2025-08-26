@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { passwordValidationSchema } from "@/lib/formDataValidation";
 import { useChangePassword } from "@/hooks/useApi";
+
 type PasswordFormData = z.infer<typeof passwordValidationSchema>;
+
 export default function ChangePassword() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -20,6 +22,7 @@ export default function ChangePassword() {
     handleSubmit,
     formState: { errors, isSubmitting },
     watch,
+    reset,
   } = useForm<PasswordFormData>({
     resolver: zodResolver(passwordValidationSchema),
     defaultValues: {
@@ -28,7 +31,10 @@ export default function ChangePassword() {
       confirmPassword: "",
     },
   });
+
   const newPassword = watch("newPassword");
+  const isLoading = changePasswordMutation.isPending || isSubmitting;
+
   // Password strength validation
   const passwordValidation = {
     hasMinLength: newPassword ? newPassword.length >= 8 : false,
@@ -45,7 +51,7 @@ export default function ChangePassword() {
         current_password: data.currentPassword,
         new_password: data.newPassword,
       });
-      
+
       if (response.success) {
         // Reset form
         reset();
@@ -243,7 +249,7 @@ export default function ChangePassword() {
               <Button
                 type="submit"
                 className="flex items-center space-x-2 px-4 py-2 sm:py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
-                disabled={isLoading || isSubmitting}
+                disabled={isLoading}
               >
                 <Save className="w-4 h-4" />
                 <span>Update Password</span>

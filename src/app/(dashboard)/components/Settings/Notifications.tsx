@@ -35,19 +35,6 @@ import type { GenericDataItem, ColumnConfig } from "@/types/dynamicTableTypes";
 import { useNotifications, useMarkNotificationAsRead } from "@/hooks/useApi";
 import type { Notification } from "@/types/api";
 
-// Types
-interface NotificationData extends GenericDataItem {
-  id: string;
-  title: string;
-  message: string;
-  type: "info" | "success" | "warning" | "error" | "user" | "system" | "payment";
-  isRead: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  priority: "low" | "medium" | "high" | "urgent";
-  category: string;
-}
-
 // Column configuration for ViewModal
 const notificationColumns: ColumnConfig[] = [
   { key: "id", label: "ID", type: "text" },
@@ -97,7 +84,8 @@ const notificationColumns: ColumnConfig[] = [
 ];
 
 export default function Notifications() {
-  const { data: notificationsResponse, isLoading: notificationsLoading, refetch } = useNotifications();
+  const { data: notificationsResponse, isLoading: notificationsLoading } =
+    useNotifications();
   const markAsReadMutation = useMarkNotificationAsRead();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [selectedNotification, setSelectedNotification] =
@@ -280,7 +268,7 @@ export default function Notifications() {
   const toggleReadStatus = useCallback(
     async (id: number, event: React.MouseEvent) => {
       event.stopPropagation();
-      
+
       const notification = notifications.find((n) => n.id === id);
       if (!notification) return;
 
@@ -314,7 +302,7 @@ export default function Notifications() {
   // Mark all as read
   const markAllAsRead = useCallback(() => {
     const unreadNotifications = notifications.filter((n) => !n.is_read);
-    
+
     unreadNotifications.forEach(async (notification) => {
       try {
         await markAsReadMutation.mutateAsync(notification.id);
@@ -324,7 +312,11 @@ export default function Notifications() {
     });
 
     setNotifications((prev) =>
-      prev.map((n) => ({ ...n, is_read: true, updated_at: new Date().toISOString() }))
+      prev.map((n) => ({
+        ...n,
+        is_read: true,
+        updated_at: new Date().toISOString(),
+      }))
     );
   }, [notifications, markAsReadMutation]);
 
@@ -494,7 +486,8 @@ export default function Notifications() {
               <div className="flex items-start gap-3">
                 {/* Icon */}
                 <div className="mt-1 flex-shrink-0">
-                  {getNotificationIcon("info")} {/* Default to info since API doesn't provide type */}
+                  {getNotificationIcon("info")}{" "}
+                  {/* Default to info since API doesn't provide type */}
                 </div>
 
                 {/* Content */}

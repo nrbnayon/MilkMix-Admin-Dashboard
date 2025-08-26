@@ -8,7 +8,7 @@ import {
   ChevronDown,
   Download,
   RefreshCw,
-  Trash2,
+  // Trash2,
   ArrowRight,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -97,7 +97,7 @@ export const DynamicTable: React.FC<DynamicTableProps> = ({
   onItemDelete,
   onItemsSelect,
   onExport,
-  onRefresh,
+  // onRefresh,
   buttonText,
   pageUrl,
   isDataEditable = true,
@@ -684,7 +684,7 @@ export const DynamicTable: React.FC<DynamicTableProps> = ({
           {renderFilters()}
         </div>
         <div className="flex flex-row gap-2 w-full lg:w-auto justify-center lg:justify-end">
-          {onRefresh && (
+          {/* {onRefresh && (
             <Button
               variant="outline"
               size="lg"
@@ -693,7 +693,7 @@ export const DynamicTable: React.FC<DynamicTableProps> = ({
             >
               <RefreshCw className="w-4 h-4" />
             </Button>
-          )}
+          )} */}
           {onExport && (
             <Button
               variant="outline"
@@ -731,7 +731,7 @@ export const DynamicTable: React.FC<DynamicTableProps> = ({
                 Export Selected
               </Button>
             )}
-            {onItemDelete && (
+            {/* {onItemDelete && (
               <Button
                 variant="destructive"
                 size="sm"
@@ -747,7 +747,7 @@ export const DynamicTable: React.FC<DynamicTableProps> = ({
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete Selected
               </Button>
-            )}
+            )} */}
             <Button
               variant="outline"
               size="sm"

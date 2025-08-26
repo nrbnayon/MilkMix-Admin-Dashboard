@@ -1,5 +1,4 @@
 "use client";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -33,14 +32,11 @@ export default function ForgetPassword() {
 
   const onSubmit = async (data: ForgetPasswordFormData) => {
     try {
-      const response = await passwordResetMutation.mutateAsync({ email: data.email });
-      
-      if (response.success) {
-        toast.success("OTP sent successfully!", {
-          description: `Verification code sent to ${data.email}`,
-          duration: 2000,
-        });
+      const response = await passwordResetMutation.mutateAsync({
+        email: data.email,
+      });
 
+      if (response.success) {
         // Store email in localStorage for OTP verification
         localStorage.setItem("resetEmail", data.email);
         localStorage.setItem("otpSentTime", Date.now().toString());
@@ -49,6 +45,11 @@ export default function ForgetPassword() {
         setTimeout(() => {
           router.push("/verify-otp");
         }, 1000);
+
+        toast.success("Verification code sent!", {
+          description: `Please check your email ${data.email}`,
+          duration: 2000,
+        });
       }
     } catch (error) {
       console.error("Forget password error:", error);
@@ -133,7 +134,7 @@ export default function ForgetPassword() {
                         : "input-focus"
                     }`}
                     {...register("email")}
-                    disabled={isLoading}
+                    disabled={passwordResetMutation.isPending}
                   />
                   <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                 </div>
@@ -148,9 +149,9 @@ export default function ForgetPassword() {
               <Button
                 type="submit"
                 className="w-full h-10 sm:h-12 bg-primary/80 hover:bg-primary text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-indigo-500/20 text-sm sm:text-base"
-                disabled={isLoading || isSubmitting}
+                disabled={passwordResetMutation.isPending || isSubmitting}
               >
-                {isLoading ? (
+                {passwordResetMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     <span className="hidden sm:inline">Sending OTP...</span>

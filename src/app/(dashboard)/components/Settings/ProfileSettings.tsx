@@ -1,4 +1,3 @@
-// src\app\(dashboard)\components\Settings\ProfileSettings.tsx
 "use client";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -32,6 +31,7 @@ import Lordicon from "@/components/lordicon/lordicon-wrapper";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUpdateProfile } from "@/hooks/useApi";
 import { toast } from "sonner";
+import { getProfilePictureUrl } from "@/utils/imageUtils";
 
 // Validation schema
 const profileSchema = z.object({
@@ -59,8 +59,8 @@ export default function ProfileSettings() {
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      full_name: user?.name || "",
-      phone: user?.phone_number || "",
+      full_name: user?.user_profile?.name || "",
+      phone: user?.user_profile?.phone_number || "",
       bio: "",
       location: "",
     },
@@ -92,22 +92,25 @@ export default function ProfileSettings() {
 
   const onSubmit = async (data: ProfileFormData) => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updateData: any = {
-        first_name: data.full_name.split(' ')[0],
-        last_name: data.full_name.split(' ').slice(1).join(' '),
+        first_name: data.full_name.split(" ")[0],
+        last_name: data.full_name.split(" ").slice(1).join(" "),
         phone_number: data.phone,
       };
 
       // Add profile picture if uploaded
-      if (profileImage && profileImage.startsWith('data:')) {
+      if (profileImage && profileImage.startsWith("data:")) {
         // Convert base64 to file
         const response = await fetch(profileImage);
         const blob = await response.blob();
-        updateData.profile_picture = new File([blob], 'profile.jpg', { type: 'image/jpeg' });
+        updateData.profile_picture = new File([blob], "profile.jpg", {
+          type: "image/jpeg",
+        });
       }
 
       const result = await updateProfileMutation.mutateAsync(updateData);
-      
+
       if (result.success && result.data) {
         updateUser(result.data);
         setIsEditing(false);
@@ -137,6 +140,19 @@ export default function ProfileSettings() {
     // Implement account deletion logic here
     toast.info("Account deletion feature will be implemented");
     setIsDialogOpen(false);
+  };
+
+  console.log("Admin information::", user);
+
+  // Get the profile picture URL - handle both uploaded images and existing profile pictures
+  const getProfileImageSrc = () => {
+    if (profileImage) {
+      return profileImage;
+    }
+    if (user?.user_profile?.profile_picture) {
+      return getProfilePictureUrl(user.user_profile.profile_picture);
+    }
+    return null;
   };
 
   return (
@@ -175,9 +191,9 @@ export default function ProfileSettings() {
               <div className="text-center">
                 <div className="relative inline-block mb-4">
                   <div className="w-32 h-32 rounded-2xl overflow-hidden bg-slate-100 border-2 border-slate-200">
-                    {profileImage ? (
+                    {getProfileImageSrc() ? (
                       <Image
-                        src={profileImage}
+                        src={getProfileImageSrc()!}
                         alt="Profile"
                         className="w-full h-full object-cover"
                         width={128}
@@ -232,7 +248,7 @@ export default function ProfileSettings() {
                 <div className="w-full">
                   <button
                     onClick={() => {
-                      console.log("Logout clicked");
+                      logout();
                     }}
                     className="w-full cursor-pointer"
                   >
