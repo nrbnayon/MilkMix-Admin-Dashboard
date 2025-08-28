@@ -55,11 +55,6 @@ export default function LoginForm() {
     }
   };
 
-  const handleDemoLogin = () => {
-    setValue("email", "demo@gmail.com");
-    setValue("password", "demo123");
-  };
-
   return (
     <div className="min-h-screen flex flex-col-reverse lg:flex-row bg-white dark:bg-primary-dark">
       {/* Left Side - Welcome Message */}
@@ -80,16 +75,6 @@ export default function LoginForm() {
           <p className="text-sm sm:text-base lg:text-lg opacity-90 px-2 sm:px-0">
             Sign in to access your dashboard and manage everything
           </p>
-          <div className="pt-2 sm:pt-4 space-y-3">
-            <Button
-              variant="outline"
-              onClick={handleDemoLogin}
-              className="bg-white/10 border-white/20 hover:text-white hover:bg-white/20 w-full backdrop-blur-sm text-sm sm:text-base"
-              disabled={isLoading}
-            >
-              Try Demo Login
-            </Button>
-          </div>
         </div>
       </div>
 

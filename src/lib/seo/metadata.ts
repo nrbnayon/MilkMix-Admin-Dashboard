@@ -5,7 +5,7 @@ export const siteConfig = {
   name: "MilkMix Admin Dashboard",
   shortName: "MMAD",
   description: "MilkMix Admin Dashboard",
-  url: "https://fun-engagement-dashboard.vercel.app",
+  url: "https://milk-mix-admin-dashboard-bay.vercel.app",
   ogImage: "/logo1.png",
   logo: {
     default: "/logo1.png",

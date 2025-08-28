@@ -1,10 +1,8 @@
 // src/app/layout.tsx
-import type { Metadata } from "next";
 import { Geist, Geist_Mono, Poppins } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
-import { layoutMetadata } from "@/lib/seo/metadata";
 import Script from "next/script";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { QueryProvider } from "@/lib/providers/QueryProvider";
@@ -25,7 +23,37 @@ const poppins = Poppins({
   weight: ["200", "300", "400", "500", "600", "700", "800"],
 });
 
-export const metadata: Metadata = layoutMetadata;
+export const metadata = {
+  title: "Milk-Mix Admin Dashboard",
+  description:
+    "Milk-Mix Admin Dashboard - Manage your App easily and efficiently.",
+  keywords:
+    "MilkMix Admin Dashboard, MilkMix, Admin Panel, Dashboard, User Management, Analytics, Reports",
+  robots: "index, follow",
+  authors: [{ name: "Nayon Kanti Halder" }],
+  openGraph: {
+    title: "Milk-Mix Admin Dashboard",
+    description:
+      "Milk-Mix Admin Dashboard - Manage your App easily and efficiently.",
+    url: process.env.NEXT_PUBLIC_BASE_URL,
+    type: "website",
+    images: [
+      {
+        url: "https://i.ibb.co/qYkh0JjW/logo.png",
+        width: 1000,
+        height: 600,
+        alt: "MilkMix Logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Milk-Mix Admin Dashboard",
+    description:
+      "Milk-Mix Admin Dashboard - Manage your App easily and efficiently.",
+    images: ["https://i.ibb.co/qYkh0JjW/logo.png"],
+  },
+};
 
 export default function RootLayout({
   children,
@@ -35,6 +63,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Canonical URL */}
+        <link rel="canonical" href={process.env.NEXT_PUBLIC_BASE_URL} />
+
+        {/* JSON-LD structured data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -42,9 +74,16 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "SoftwareApplication",
               name: "MilkMix Admin Dashboard",
-              description: "MilkMix Admin Dashboard",
-              applicationCategory: "MilkMix Admin App",
+              description:
+                "MilkMix Admin Dashboard - Manage your App easily and efficiently.",
+              applicationCategory: "Admin Application",
               operatingSystem: "Web",
+              url: process.env.NEXT_PUBLIC_BASE_URL,
+              image: "https://i.ibb.co/qYkh0JjW/logo.png",
+              author: {
+                "@type": "Person",
+                name: "Nayon Kanti Halder",
+              },
             }),
           }}
         />
@@ -58,7 +97,6 @@ export default function RootLayout({
           defaultTheme="light"
           enableSystem={false}
           disableTransitionOnChange
-          // forcedTheme='light'
         >
           <QueryProvider>
             <AuthProvider>
