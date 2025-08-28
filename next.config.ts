@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
     domains: ["cdn.lordicon.com"],
   },
   experimental: {
+    
     optimizePackageImports: ["lordicon"],
   },
 

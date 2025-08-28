@@ -21,6 +21,24 @@ import type {
 } from "@/types/api";
 import { toast } from "sonner";
 
+// Types for error handling
+interface APIErrorResponse {
+  error?: string;
+  details?: {
+    email?: string | string[];
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+interface APIError extends Error {
+  response?: {
+    data?: APIErrorResponse;
+    status?: number;
+    [key: string]: unknown;
+  };
+}
+
 // Query Keys
 export const QUERY_KEYS = {
   AUTH: {
@@ -152,7 +170,7 @@ export function usePasswordResetRequest() {
     onSuccess: () => {
       toast.success("Password reset email sent!");
     },
-    onError: (error: any) => {
+    onError: (error: APIError) => {
       const errorMessage = "Failed to send reset email";
       let errorDescription = "Unknown error";
 

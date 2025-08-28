@@ -1,221 +1,346 @@
-// import { NextRequest, NextResponse } from "next/server";
-// import { jwtVerify } from "jose";
+// src/middleware.ts
+import { NextRequest, NextResponse } from "next/server";
 
-// // Define route patterns
-// const AUTH_ROUTES = [
-//   "/login",
-//   "/register",
-//   "/forgot-password",
-//   "/reset-password",
-//   "/verify-otp",
-// ];
-// const PROTECTED_ROUTES = ["/dashboard"]; //, "/profile", "/settings"
-// const PUBLIC_ROUTES = ["/", "/about", "/contact", "/success"];
+// =====================================================================
+// CONSTANTS
+// =====================================================================
 
-// // JWT secret - in production, use environment variable
-// const JWT_SECRET = new TextEncoder().encode(
-//   process.env.JWT_SECRET ||
-//     "your-super-secret-jwt-key-change-this-in-production"
-// );
+// Protected routes - these require authentication
+export const PROTECTED_ROUTES = [
+  "/overview",
+  "/profile",
+  "/settings",
+  "/manage-ads",
+  "/manage-users",
+  "/users-subscription",
+  "/notifications",
+  "/support",
+];
 
-// // Rate limiting store (in production, use Redis or similar)
-// const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+// Authentication routes - redirect to overview if already logged in
+const AUTH_ROUTES = [
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/reset-password",
+  "/reset-success",
+  "/verify-otp",
+  "/success",
+];
 
-// interface JWTPayload {
-//   userId: string;
-//   email: string;
-//   role?: string;
-//   exp: number;
-//   iat: number;
-// }
+// Public routes - accessible to everyone
+const PUBLIC_ROUTES = [
+  "/about",
+  "/contact",
+  "/terms",
+  "/privacy",
+  "/help",
+  "/faq",
+  "/unauthorized",
+];
 
-// async function verifyToken(token: string): Promise<JWTPayload | null> {
-//   try {
-//     const { payload } = await jwtVerify(token, JWT_SECRET);
-//     return payload as unknown as JWTPayload;
-//   } catch {
-//     return null;
-//   }
-// }
+// =====================================================================
+// UTILITY FUNCTIONS
+// =====================================================================
 
-// function isRouteMatch(pathname: string, routes: string[]): boolean {
-//   return routes.some((route) => {
-//     if (route === pathname) return true;
-//     if (route.endsWith("*")) {
-//       return pathname.startsWith(route.slice(0, -1));
-//     }
-//     return pathname.startsWith(route);
-//   });
-// }
+/**
+ * Check if the pathname matches any of the given route patterns
+ */
+function matchesRoutes(pathname: string, routes: string[]): boolean {
+  return routes.some((route) => {
+    // Exact match
+    if (pathname === route) return true;
+    // Dynamic route match (e.g., /profile/settings matches /profile)
+    if (pathname.startsWith(route + "/")) return true;
+    return false;
+  });
+}
 
-// // function rateLimit(
-// //   ip: string,
-// //   limit: number = 100,
-// //   windowMs: number = 15 * 60 * 1000
-// // ): boolean {
-// //   const now = Date.now();
-// //   const key = `${ip}-${Math.floor(now / windowMs)}`;
+/**
+ * Validate JWT token format (basic structure check)
+ */
+function isValidJWTFormat(token: string): boolean {
+  if (!token || typeof token !== "string") return false;
 
-// //   const current = rateLimitStore.get(key) || {
-// //     count: 0,
-// //     resetTime: now + windowMs,
-// //   };
+  const parts = token.split(".");
+  if (parts.length !== 3) return false;
 
-// //   if (now > current.resetTime) {
-// //     current.count = 1;
-// //     current.resetTime = now + windowMs;
-// //   } else {
-// //     current.count++;
-// //   }
+  try {
+    // Check if each part is valid base64
+    parts.forEach((part) => {
+      if (part) {
+        atob(part.replace(/-/g, "+").replace(/_/g, "/"));
+      }
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
 
-// //   rateLimitStore.set(key, current);
+/**
+ * Check if JWT token is expired
+ */
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    const currentTime = Date.now() / 1000;
+    return payload.exp < currentTime;
+  } catch {
+    return true;
+  }
+}
 
-// //   // Clean up old entries
-// //   for (const [k, v] of rateLimitStore.entries()) {
-// //     if (now > v.resetTime) {
-// //       rateLimitStore.delete(k);
-// //     }
-// //   }
+/**
+ * Check if user is authenticated based on localStorage tokens
+ * This function extracts tokens from request headers (set by client-side code)
+ */
+function isAuthenticated(request: NextRequest): boolean {
+  const isDev = process.env.NODE_ENV === "development";
 
-// //   return current.count <= limit;
-// // }
+  if (isDev) {
+    console.log("🔍 [AUTH] Checking authentication...");
+  }
 
-// export async function middleware(request: NextRequest) {
-//   const { pathname } = request.nextUrl;
-//   const response = NextResponse.next();
+  try {
+    // Check for Authorization header (set by client-side code)
+    const authHeader = request.headers.get("authorization");
+    const tokenFromHeader = authHeader?.startsWith("Bearer ")
+      ? authHeader.substring(7)
+      : null;
 
-//   // Get client IP for rate limiting
-//   // const ip =
-//   //   request.headers.get("x-forwarded-for") ||
-//   //   request.headers.get("x-real-ip") ||
-//   //   "unknown";
+    // Check for custom headers that client-side code might set
+    const tokenFromCustomHeader = request.headers.get("x-auth-token");
 
-//   // // Apply rate limiting
-//   // if (!rateLimit(ip)) {
-//   //   return new NextResponse("Too Many Requests", {
-//   //     status: 429,
-//   //     headers: {
-//   //       "Retry-After": "900", // 15 minutes
-//   //       "X-RateLimit-Limit": "100",
-//   //       "X-RateLimit-Remaining": "0",
-//   //       "X-RateLimit-Reset": new Date(
-//   //         Date.now() + 15 * 60 * 1000
-//   //       ).toISOString(),
-//   //     },
-//   //   });
-//   // }
+    // Check cookies as fallback (in case client-side sets them)
+    const tokenFromCookie = request.cookies.get("auth-token")?.value;
 
-//   // // Security headers
-//   // response.headers.set("X-Frame-Options", "DENY");
-//   // response.headers.set("X-Content-Type-Options", "nosniff");
-//   // response.headers.set("Referrer-Policy", "origin-when-cross-origin");
-//   // response.headers.set("X-XSS-Protection", "1; mode=block");
-//   // response.headers.set(
-//   //   "Strict-Transport-Security",
-//   //   "max-age=31536000; includeSubDomains; preload"
-//   // );
-//   // response.headers.set(
-//   //   "Content-Security-Policy",
-//   //   "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; media-src 'self'; object-src 'none'; child-src 'none'; worker-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self';"
-//   // );
+    const token = tokenFromHeader || tokenFromCustomHeader || tokenFromCookie;
 
-//   // Skip middleware for static files and API routes that don't need protection
-//   if (
-//     pathname.startsWith("/_next/") ||
-//     pathname.startsWith("/api/public") ||
-//     pathname.includes(".") ||
-//     pathname === "/favicon.ico"
-//   ) {
-//     return response;
-//   }
+    if (isDev) {
+      console.log(
+        "🍪 [AUTH] Token from header:",
+        tokenFromHeader ? "✅ Present" : "❌ Missing"
+      );
+      console.log(
+        "🍪 [AUTH] Token from custom header:",
+        tokenFromCustomHeader ? "✅ Present" : "❌ Missing"
+      );
+      console.log(
+        "🍪 [AUTH] Token from cookie:",
+        tokenFromCookie ? "✅ Present" : "❌ Missing"
+      );
+    }
 
-//   // Get token from cookies or Authorization header
-//   const tokenFromCookie = request.cookies.get("auth-token")?.value;
-//   const authHeader = request.headers.get("authorization");
-//   const tokenFromHeader = authHeader?.startsWith("Bearer ")
-//     ? authHeader.substring(7)
-//     : null;
+    if (!token || token.trim().length === 0) {
+      if (isDev) console.log("❌ [AUTH] No token found");
+      return false;
+    }
 
-//   console.log("Token from Cookie:", tokenFromCookie);
-//   console.log("Token from Header:", tokenFromHeader);
-//   const token = tokenFromCookie || tokenFromHeader;
-//   const user = token ? await verifyToken(token) : null;
+    // Validate JWT format
+    if (!isValidJWTFormat(token)) {
+      if (isDev) console.log("❌ [AUTH] Invalid token format");
+      return false;
+    }
 
-//   // Handle authentication routes
-//   if (isRouteMatch(pathname, AUTH_ROUTES)) {
-//     // If user is already authenticated, redirect to dashboard
-//     if (user) {
-//       return NextResponse.redirect(new URL("/dashboard", request.url));
-//     }
-//     return response;
-//   }
+    // Check if token is expired
+    if (isTokenExpired(token)) {
+      if (isDev) console.log("❌ [AUTH] Token is expired");
+      return false;
+    }
 
-//   // Handle protected routes
-//   if (isRouteMatch(pathname, PROTECTED_ROUTES)) {
-//     if (!user) {
-//       // Store the attempted URL for redirect after login
-//       const redirectUrl = new URL("/login", request.url);
-//       redirectUrl.searchParams.set("redirect", pathname);
-//       return NextResponse.redirect(redirectUrl);
-//     }
+    if (isDev) console.log("✅ [AUTH] Authentication successful");
+    return true;
+  } catch (error) {
+    console.error("💥 [AUTH] Authentication check failed:", error);
+    return false;
+  }
+}
 
-//     // Add user info to headers for the app to use
-//     response.headers.set("X-User-Id", user.userId);
-//     response.headers.set("X-User-Email", user.email);
-//     if (user.role) {
-//       response.headers.set("X-User-Role", user.role);
-//     }
+/**
+ * Add security headers to response
+ */
+function addSecurityHeaders(response: NextResponse): void {
+  // Prevent click jacking
+  response.headers.set("X-Frame-Options", "DENY");
 
-//     return response;
-//   }
+  // Prevent MIME type sniffing
+  response.headers.set("X-Content-Type-Options", "nosniff");
 
-//   // Handle public routes - always allow access
-//   if (isRouteMatch(pathname, PUBLIC_ROUTES)) {
-//     // Add user context if available (for personalized content)
-//     if (user) {
-//       response.headers.set("X-User-Id", user.userId);
-//       response.headers.set("X-User-Email", user.email);
-//       if (user.role) {
-//         response.headers.set("X-User-Role", user.role);
-//       }
-//     }
-//     return response;
-//   }
+  // Enable XSS protection
+  response.headers.set("X-XSS-Protection", "1; mode=block");
 
-//   // Handle OTP verification route
-//   // if (pathname === "//verify-otp") {
-//   //   // Allow access but could add additional checks here
-//   //   return response;
-//   // }
+  // Control referrer information
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
 
-//   // For all other routes not explicitly defined, require authentication
-//   console.log("Middleware - Undefined route accessed:", pathname, user);
-//   if (!user) {
-//     const redirectUrl = new URL("/login", request.url);
-//     redirectUrl.searchParams.set("redirect", pathname);
-//     return NextResponse.redirect(redirectUrl);
-//   }
+  // Add CORS headers for API routes
+  response.headers.set("Access-Control-Allow-Origin", "*");
+  response.headers.set(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS"
+  );
+  response.headers.set(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, x-auth-token"
+  );
 
-//   // Add user context for authenticated users on undefined routes
-//   response.headers.set("X-User-Id", user.userId);
-//   response.headers.set("X-User-Email", user.email);
-//   if (user.role) {
-//     response.headers.set("X-User-Role", user.role);
-//   }
+  // Only in production, add HSTS
+  if (process.env.NODE_ENV === "production") {
+    response.headers.set(
+      "Strict-Transport-Security",
+      "max-age=31536000; includeSubDomains; preload"
+    );
+  }
+}
 
-//   return response;
-// }
+/**
+ * Create secure redirect response
+ */
+function createRedirectResponse(
+  request: NextRequest,
+  destination: string
+): NextResponse {
+  const url = new URL(destination, request.url);
+  const response = NextResponse.redirect(url);
+  addSecurityHeaders(response);
+  return response;
+}
 
-// // Configure which routes the middleware should run on
-// export const config = {
-//   matcher: [
-//     /*
-//      * Match all request paths except:
-//      * - _next/static (static files)
-//      * - _next/image (image optimization files)
-//      * - favicon.ico (favicon file)
-//      * - public files (public folder)
-//      */
-//     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-//   ],
-// };
+/**
+ * Create secure next response
+ */
+function createNextResponse(): NextResponse {
+  const response = NextResponse.next();
+  addSecurityHeaders(response);
+  return response;
+}
+
+// =====================================================================
+// MAIN MIDDLEWARE FUNCTION
+// =====================================================================
+
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const method = request.method;
+  const isDev = process.env.NODE_ENV === "development";
+
+  if (isDev) {
+    console.log(`\n🚀 [MIDDLEWARE] ${method} ${pathname}`);
+  }
+
+  // Skip middleware for Next.js internals, static files, and API routes
+  if (
+    pathname.startsWith("/_next/") ||
+    pathname.startsWith("/api/") ||
+    pathname === "/favicon.ico" ||
+    pathname.startsWith("/icons/") ||
+    pathname.startsWith("/public/") ||
+    (pathname.includes(".") &&
+      !pathname.endsWith("/") &&
+      (pathname.includes(".js") ||
+        pathname.includes(".css") ||
+        pathname.includes(".png") ||
+        pathname.includes(".jpg") ||
+        pathname.includes(".svg") ||
+        pathname.includes(".ico") ||
+        pathname.includes(".gif") ||
+        pathname.includes(".json")))
+  ) {
+    return NextResponse.next();
+  }
+
+  try {
+    // Check user authentication status
+    const userIsAuthenticated = isAuthenticated(request);
+
+    // Handle root path - PUBLIC (allow unauthenticated users)
+    if (pathname === "/") {
+      if (isDev) console.log(`🏠 [MIDDLEWARE] Root path accessed`);
+
+      if (userIsAuthenticated) {
+        // Redirect authenticated users to overview
+        if (isDev) console.log(`🏠 [MIDDLEWARE] Authenticated user → overview`);
+        return createRedirectResponse(request, "/overview");
+      } else {
+        // Allow unauthenticated users to see root page
+        if (isDev)
+          console.log(
+            `🏠 [MIDDLEWARE] Unauthenticated user → root page allowed`
+          );
+        return createNextResponse();
+      }
+    }
+
+    // 🔒 PROTECTED ROUTES - STRICT ENFORCEMENT
+    if (matchesRoutes(pathname, PROTECTED_ROUTES)) {
+      if (isDev) console.log(`🔒 [MIDDLEWARE] Protected route: ${pathname}`);
+
+      if (!userIsAuthenticated) {
+        if (isDev)
+          console.log(`🚫 [MIDDLEWARE] Access denied → Redirecting to login`);
+
+        const loginUrl = new URL("/login", request.url);
+        loginUrl.searchParams.set("redirect", pathname);
+        return NextResponse.redirect(loginUrl);
+      }
+
+      if (isDev) console.log(`✅ [MIDDLEWARE] Access granted`);
+      return createNextResponse();
+    }
+
+    // 🚪 AUTHENTICATION ROUTES
+    if (matchesRoutes(pathname, AUTH_ROUTES)) {
+      if (isDev) console.log(`🚪 [MIDDLEWARE] Auth route: ${pathname}`);
+
+      if (userIsAuthenticated) {
+        if (isDev)
+          console.log(`↩️  [MIDDLEWARE] Already authenticated → overview`);
+        return createRedirectResponse(request, "/overview");
+      }
+
+      return createNextResponse();
+    }
+
+    // 🌍 PUBLIC ROUTES
+    if (matchesRoutes(pathname, PUBLIC_ROUTES)) {
+      if (isDev) console.log(`🌍 [MIDDLEWARE] Public route: ${pathname}`);
+      return createNextResponse();
+    }
+
+    // 🛡️ UNKNOWN ROUTES - DEFAULT TO PROTECTED FOR SECURITY
+    if (isDev)
+      console.log(
+        `❓ [MIDDLEWARE] Unknown route: ${pathname} - treating as protected`
+      );
+
+    if (!userIsAuthenticated) {
+      if (isDev) console.log(`🚫 [MIDDLEWARE] Unknown route blocked`);
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    return createNextResponse();
+  } catch (error) {
+    console.error("💥 [MIDDLEWARE] Critical error:", error);
+    return createNextResponse();
+  }
+}
+
+// =====================================================================
+// MIDDLEWARE CONFIG
+// =====================================================================
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder files
+     */
+    "/((?!api|_next/static|_next/image|favicon.ico|public|icons).*)",
+  ],
+};

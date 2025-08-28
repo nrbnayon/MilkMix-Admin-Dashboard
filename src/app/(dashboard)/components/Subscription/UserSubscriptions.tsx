@@ -440,12 +440,12 @@ export default function UserSubscriptions({
 
   const handleDataChange = (newData: GenericDataItem[]) => {
     setUsers(newData as TransformedUserData[]);
-    // console.log("Users data changed:", newData);
+    console.log("Users data changed:", newData);
   };
 
   const handleUsersSelect = (selectedIds: string[]) => {
     // console.log("Selected users:", selectedIds);
-    const selectedUsers = users.filter((user) => selectedIds.includes(user.id));
+    users.filter((user) => selectedIds.includes(user.id));
     // console.log("Selected user objects:", selectedUsers);
     // Handle bulk operations like bulk status update, export, etc.
   };
@@ -486,6 +486,7 @@ export default function UserSubscriptions({
   };
 
   const handleRefresh = () => {
+    // console.log("Refreshing subscription data...");
     refetch();
   };
 
