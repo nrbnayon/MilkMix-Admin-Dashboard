@@ -465,7 +465,7 @@ export const DynamicEditModal: React.FC<DynamicEditModalProps> = ({
                 // Show image preview with remove option
                 <div className="relative inline-block">
                   <Image
-                    src={currentPreview || "/placeholder.svg"}
+                    src={currentPreview || ""}
                     alt="Preview"
                     className="w-32 h-32 object-cover rounded-lg border border-gray-200"
                     width={128}
@@ -657,7 +657,7 @@ export const DynamicEditModal: React.FC<DynamicEditModalProps> = ({
             {formData.avatar && (
               <Avatar className="w-8 h-8">
                 <AvatarImage
-                  src={formData.avatar || "/placeholder.svg"}
+                  src={formData.avatar || ""}
                   alt={formData.name || "User"}
                 />
                 <AvatarFallback>

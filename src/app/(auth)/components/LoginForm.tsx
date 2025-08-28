@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,13 +12,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { loginValidationSchema } from "@/lib/formDataValidation";
+import { useAuth } from "@/contexts/AuthContext";
 
 type LoginFormData = z.infer<typeof loginValidationSchema>;
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { login, isLoading } = useAuth();
 
   const {
     register,
@@ -39,47 +39,20 @@ export default function LoginForm() {
   const rememberMe = watch("rememberMe");
 
   const onSubmit = async (data: LoginFormData) => {
-    setIsLoading(true);
-
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Log the form data to console
-      console.log("Login Form Data:", {
+      const success = await login({
         email: data.email,
         password: data.password,
-        rememberMe: data.rememberMe,
-        timestamp: new Date().toISOString(),
       });
 
-      // Simulate successful login
-      toast.success("Login successful!", {
-        description: `Welcome back, ${data.email}!`,
-        duration: 2000,
-      });
-
-      // Redirect to dashboard after a short delay
-      setTimeout(() => {
+      if (success) {
+        // Redirect based on role or default to overview
         router.push("/overview");
-      }, 1000);
+        router.refresh(); // Force refresh to update server-side components
+      }
     } catch (error) {
-      console.error("Login error:", error);
-      toast.error("Login failed", {
-        description: "Please check your credentials and try again.",
-        duration: 3000,
-      });
-    } finally {
-      setIsLoading(false);
+      console.error("Login submission error:", error);
     }
-  };
-
-  const handleDemoLogin = () => {
-    setValue("email", "demo@gmail.com");
-    setValue("password", "demo123");
-    toast.info("Demo credentials filled", {
-      description: "Click Login to continue with demo account",
-    });
   };
 
   return (
@@ -102,15 +75,6 @@ export default function LoginForm() {
           <p className="text-sm sm:text-base lg:text-lg opacity-90 px-2 sm:px-0">
             Sign in to access your dashboard and manage everything
           </p>
-          <div className="pt-2 sm:pt-4 space-y-3">
-            <Button
-              variant="outline"
-              onClick={handleDemoLogin}
-              className="bg-white/10 border-white/20 hover:text-white hover:bg-white/20 w-full backdrop-blur-sm text-sm sm:text-base"
-            >
-              Try Demo Login
-            </Button>
-          </div>
         </div>
       </div>
 
@@ -147,7 +111,7 @@ export default function LoginForm() {
                         : "input-focus"
                     }`}
                     {...register("email")}
-                    disabled={isLoading}
+                    disabled={isLoading || isSubmitting}
                   />
                   <User className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                 </div>
@@ -177,13 +141,13 @@ export default function LoginForm() {
                         : "input-focus"
                     }`}
                     {...register("password")}
-                    disabled={isLoading}
+                    disabled={isLoading || isSubmitting}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 hover:text-primary transition-colors"
-                    disabled={isLoading}
+                    disabled={isLoading || isSubmitting}
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
@@ -209,7 +173,7 @@ export default function LoginForm() {
                     onCheckedChange={(checked) =>
                       setValue("rememberMe", !!checked)
                     }
-                    disabled={isLoading}
+                    disabled={isLoading || isSubmitting}
                   />
                   <label
                     htmlFor="rememberMe"
@@ -232,7 +196,7 @@ export default function LoginForm() {
                 className="w-full h-10 sm:h-12 bg-primary/80 hover:bg-primary text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-indigo-500/20 text-sm sm:text-base"
                 disabled={isLoading || isSubmitting}
               >
-                {isLoading ? (
+                {isLoading || isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Signing in...

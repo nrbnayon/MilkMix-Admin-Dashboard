@@ -1,0 +1,1079 @@
+{
+	"info": {
+		"_postman_id": "95aaf5d0-6ee3-47a6-ac66-d13bd2ca54ff",
+		"name": "milkmix",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "40169658",
+		"_collection_link": "https://make-your-own-business.postman.co/workspace/Make-your-Own-business-Workspac~f22cf6b8-cf90-4b49-8843-06bcc4e9efa6/collection/40169658-95aaf5d0-6ee3-47a6-ac66-d13bd2ca54ff?action=share&source=collection_link&creator=40169658"
+	},
+	"item": [
+		{
+			"name": "authentications",
+			"item": [
+				{
+					"name": "signup",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \n    \"name\": \"rasel\",\n    \"email\": \"aininjaibrahim@gmail.com\",\n    \"password\": \"Test@123\",\n    \"role\": \"consultant\"\n    \n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}api/auth/register/",
+							"host": [
+								"{{base_url}}api"
+							],
+							"path": [
+								"auth",
+								"register",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \n    \"email\": \"admin@gmail.com\",\n    \"password\": \"admin\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}api/auth/login/",
+							"host": [
+								"{{base_url}}api"
+							],
+							"path": [
+								"auth",
+								"login",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get_profile",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgwNTAwMDk2LCJpYXQiOjE3NDg5NjQwOTYsImp0aSI6ImI3Y2Y1MmYzOWY0NDQzM2NiNmQyMWRlOTE0NDYyOTM5IiwidXNlcl9pZCI6M30.nW5avRxLFSV8ymG3SBYsxwjKCwNKg70eKbGER31lVXY",
+									"type": "string"
+								},
+								{
+									"key": "undefined",
+									"type": "any"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}api/auth/profile/",
+							"host": [
+								"{{base_url}}api"
+							],
+							"path": [
+								"auth",
+								"profile",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update_profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgwNTAwMDk2LCJpYXQiOjE3NDg5NjQwOTYsImp0aSI6ImI3Y2Y1MmYzOWY0NDQzM2NiNmQyMWRlOTE0NDYyOTM5IiwidXNlcl9pZCI6M30.nW5avRxLFSV8ymG3SBYsxwjKCwNKg70eKbGER31lVXY",
+									"type": "string"
+								},
+								{
+									"key": "undefined",
+									"type": "any"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "first_name",
+									"value": "Ibrahim ",
+									"type": "text"
+								},
+								{
+									"key": "last_name",
+									"value": "khalilll",
+									"type": "text"
+								},
+								{
+									"key": "phone_number",
+									"value": "01878248774",
+									"type": "text"
+								},
+								{
+									"key": "profile_picture\n",
+									"type": "file",
+									"src": "/C:/Users/Ibrahim Khalil/Pictures/Screenshots/Screenshot (1).png"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}api/auth/profile/",
+							"host": [
+								"{{base_url}}api"
+							],
+							"path": [
+								"auth",
+								"profile",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "otp_create",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\" : \"aininjaibrahim@gmail.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}api/auth/otp/create/",
+							"host": [
+								"{{base_url}}api"
+							],
+							"path": [
+								"auth",
+								"otp",
+								"create",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "verify_otp",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"otp\" : \"124669\",\n   \"email\" : \"aininjaibrahim@gmail.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}api/auth/otp/verify/",
+							"host": [
+								"{{base_url}}api"
+							],
+							"path": [
+								"auth",
+								"otp",
+								"verify",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "reset_otp_create",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\" : \"sheikhanikbd@gmail.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}api/auth/password-reset/request/",
+							"host": [
+								"{{base_url}}api"
+							],
+							"path": [
+								"auth",
+								"password-reset",
+								"request",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "reset_password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"argo@gmail.com\",\n    \"otp\": \"380786\",\n    \"new_password\": \"Test@123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}api/auth/password-reset/confirm/",
+							"host": [
+								"{{base_url}}api"
+							],
+							"path": [
+								"auth",
+								"password-reset",
+								"confirm",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "change_password",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUxMzgxMDkxLCJpYXQiOjE3NDYxOTcwOTEsImp0aSI6IjdiMGVhMDRhYmYwNzQwMDI5M2I1N2M0MGM2MjU1ZDEzIiwidXNlcl9pZCI6M30.2pq5DwHPyJdNcn8CV-kbUnHS2SHMdxHuFbvsa_FelEM",
+									"type": "string"
+								},
+								{
+									"key": "undefined",
+									"type": "any"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"current_password\" : \"admin@gmail.com\",\n    \"new_password\" : \"admin\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}api/auth/password-change/",
+							"host": [
+								"{{base_url}}api"
+							],
+							"path": [
+								"auth",
+								"password-change",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "reset_otp_verify",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"otp\" : \"124669\",\n   \"email\" : \"aininjaibrahim@gmail.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}api/auth/reset/otp-verify/",
+							"host": [
+								"{{base_url}}api"
+							],
+							"path": [
+								"auth",
+								"reset",
+								"otp-verify",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Milk History",
+			"item": [
+				{
+					"name": "post_milk_history",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"bottle_size\": 2.5,\r\n    \"number_of_bottles\": 10,\r\n    \"hospital_solids\": 12.5,\r\n    \"hospital_milk_volume\": 20.0,\r\n    \"desired_solids_content\": 13.0,\r\n    \"pounds_of_water\": 50.0,\r\n    \"pounds_of_milk_replacer\": 5.0,\r\n    \"solids_hospital_milk\": 2.5,\r\n    \"hospital_milk_used\": 18.0,\r\n    \"total_volume\" : \"885000 (lbs)\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}api/milk-history/create/",
+							"host": [
+								"{{base_url}}api"
+							],
+							"path": [
+								"milk-history",
+								"create",
+								""
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "create",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"bottle_size\": 2.5,\r\n    \"number_of_bottles\": 10,\r\n    \"hospital_solids\": 12.5,\r\n    \"hospital_milk_volume\": 20.0,\r\n    \"desired_solids_content\": 13.0,\r\n    \"pounds_of_water\": 50.0,\r\n    \"pounds_of_milk_replacer\": 5.0,\r\n    \"solids_hospital_milk\": 2.5,\r\n    \"hospital_milk_used\": 18.0\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}api/milk-history/create/",
+									"host": [
+										"{{base_url}}api"
+									],
+									"path": [
+										"milk-history",
+										"create",
+										""
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Allow",
+									"value": "OPTIONS, POST"
+								},
+								{
+									"key": "Content-Length",
+									"value": "414"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Cross-Origin-Opener-Policy",
+									"value": "same-origin"
+								},
+								{
+									"key": "Date",
+									"value": "Sat, 19 Jul 2025 10:13:38 GMT"
+								},
+								{
+									"key": "Ngrok-Agent-Ips",
+									"value": "103.159.73.129"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "same-origin"
+								},
+								{
+									"key": "Server",
+									"value": "WSGIServer/0.2 CPython/3.10.0"
+								},
+								{
+									"key": "Vary",
+									"value": "Accept, origin"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Milk history record created successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"user\": 5,\n        \"user_email\": \"aininjaibrahim@gmail.com\",\n        \"created_at\": \"2025-07-19T10:13:38.894929Z\",\n        \"bottle_size\": \"2.50\",\n        \"number_of_bottles\": 10,\n        \"hospital_solids\": \"12.50\",\n        \"hospital_milk_volume\": \"20.00\",\n        \"desired_solids_content\": \"13.00\",\n        \"pounds_of_water\": \"50.00\",\n        \"pounds_of_milk_replacer\": \"5.00\",\n        \"solids_hospital_milk\": \"2.50\",\n        \"hospital_milk_used\": \"18.00\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "get_milk_history",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}} ",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"bottle_size\": 2.5,\r\n    \"number_of_bottles\": 10,\r\n    \"hospital_solids\": 12.5,\r\n    \"hospital_milk_volume\": 20.0,\r\n    \"desired_solids_content\": 13.0,\r\n    \"pounds_of_water\": 50.0,\r\n    \"pounds_of_milk_replacer\": 5.0,\r\n    \"solids_hospital_milk\": 2.5,\r\n    \"hospital_milk_used\": 18.0\r\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}api/milk-history/",
+							"host": [
+								"{{base_url}}api"
+							],
+							"path": [
+								"milk-history",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get_history_by_user_id",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}} ",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"bottle_size\": 2.5,\r\n    \"number_of_bottles\": 10,\r\n    \"hospital_solids\": 12.5,\r\n    \"hospital_milk_volume\": 20.0,\r\n    \"desired_solids_content\": 13.0,\r\n    \"pounds_of_water\": 50.0,\r\n    \"pounds_of_milk_replacer\": 5.0,\r\n    \"solids_hospital_milk\": 2.5,\r\n    \"hospital_milk_used\": 18.0\r\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}api/milk-history/user/5/",
+							"host": [
+								"{{base_url}}api"
+							],
+							"path": [
+								"milk-history",
+								"user",
+								"5",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "member",
+			"item": [
+				{
+					"name": "add_member",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								},
+								{
+									"key": "undefined",
+									"type": "any"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"farm\": 48,\r\n    \"email\": \"newfarmuser@example.com\",\r\n    \"password\": \"securepassword123\",\r\n    \"name\": \"John Doe\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}api/members/create/",
+							"host": [
+								"{{base_url}}api"
+							],
+							"path": [
+								"members",
+								"create",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get_farm_all_ember_by_farm_id",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzg0NDU5NTY4LCJpYXQiOjE3NTI5MjM1NjgsImp0aSI6Ijk1YjBiNjEzNzZlYTQ2MWQ4MGQ2M2E1NjBmYWYyYWZkIiwidXNlcl9pZCI6MTR9.Lb9mkWjGZabdFHO1KeINaPmdH9zgofIkiQjjdkE6Udg",
+									"type": "string"
+								},
+								{
+									"key": "undefined",
+									"type": "any"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{base_url}}api/members/farm/14/",
+							"host": [
+								"{{base_url}}api"
+							],
+							"path": [
+								"members",
+								"farm",
+								"14",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get_member_profile",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzg0Njk0NDY1LCJpYXQiOjE3NTMxNTg0NjUsImp0aSI6ImU2NGY0MjI3MGVkODQ2NjFhZmY1NjhkYjcyNzAwZWQ2IiwidXNlcl9pZCI6MzB9.TP9ps0nQJ3b7rIL7amtHh92yTE7ESHgz6IenuAtc44Q",
+									"type": "string"
+								},
+								{
+									"key": "undefined",
+									"type": "any"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"farm\": 14,\r\n    \"email\": \"newfarmuser@example.com\",\r\n    \"password\": \"securepassword123\",\r\n    \"name\": \"John Doe\"\r\n    \r\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}api/members/profile/",
+							"host": [
+								"{{base_url}}api"
+							],
+							"path": [
+								"members",
+								"profile",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "consultant",
+			"item": [
+				{
+					"name": "search_farm",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzg0Nzg1MTc2LCJpYXQiOjE3NTMyNDkxNzYsImp0aSI6IjFlODBiYjlmZWMwYzQyNWViNmIyNGNjYzQ2NmE2YjlhIiwidXNlcl9pZCI6NDJ9.OGVQvvOQJrvVG0e22C60pBDbdD3VGkJ_VkFrTG01jzE",
+									"type": "string"
+								},
+								{
+									"key": "undefined",
+									"type": "any"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"cocktail_id\" : 38\r\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}api/consultants/search/farm/?name=agro farm",
+							"host": [
+								"{{base_url}}api"
+							],
+							"path": [
+								"consultants",
+								"search",
+								"farm",
+								""
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "agro farm"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "request_on_farm",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzg0Nzg1MTc2LCJpYXQiOjE3NTMyNDkxNzYsImp0aSI6IjFlODBiYjlmZWMwYzQyNWViNmIyNGNjYzQ2NmE2YjlhIiwidXNlcl9pZCI6NDJ9.OGVQvvOQJrvVG0e22C60pBDbdD3VGkJ_VkFrTG01jzE",
+									"type": "string"
+								},
+								{
+									"key": "undefined",
+									"type": "any"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"farm\": 38,\r\n    \"consultant\": 42\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}api/consultants/request/",
+							"host": [
+								"{{base_url}}api"
+							],
+							"path": [
+								"consultants",
+								"request",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get_all_accepted_farm",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzg0Nzg1MTc2LCJpYXQiOjE3NTMyNDkxNzYsImp0aSI6IjFlODBiYjlmZWMwYzQyNWViNmIyNGNjYzQ2NmE2YjlhIiwidXNlcl9pZCI6NDJ9.OGVQvvOQJrvVG0e22C60pBDbdD3VGkJ_VkFrTG01jzE",
+									"type": "string"
+								},
+								{
+									"key": "undefined",
+									"type": "any"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"farm\": 38,\r\n    \"consultant\": 42\r\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}api/consultants/farm/list",
+							"host": [
+								"{{base_url}}api"
+							],
+							"path": [
+								"consultants",
+								"farm",
+								"list"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get_member_list_by_farm_id",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "farm",
+			"item": [
+				{
+					"name": "get_pending_request_in_consultant",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "request_mange",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzg0Nzg3NzAwLCJpYXQiOjE3NTMyNTE3MDAsImp0aSI6Ijk1YzhjMzExM2YxNjQ5OThiZTMxMGM5MjZkZmEzNTFkIiwidXNlcl9pZCI6Mzh9.AvmI2WSv7Yug-vboShv5C2a7d5aCoD15SdLEqEHai4c",
+									"type": "string"
+								},
+								{
+									"key": "undefined",
+									"type": "any"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"action\" : \"accept\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}api/consultants/request/1/manage/",
+							"host": [
+								"{{base_url}}api"
+							],
+							"path": [
+								"consultants",
+								"request",
+								"1",
+								"manage",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "admin",
+			"item": [
+				{
+					"name": "subscribtions",
+					"item": [
+						{
+							"name": "get_all_subscribtions",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										},
+										{
+											"key": "undefined",
+											"type": "any"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}api/payment/all-subscriptions/",
+									"host": [
+										"{{base_url}}api"
+									],
+									"path": [
+										"payment",
+										"all-subscriptions",
+										""
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "notifications",
+					"item": [
+						{
+							"name": "get_all_notifications",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										},
+										{
+											"key": "undefined",
+											"type": "any"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}api/notifications/",
+									"host": [
+										"{{base_url}}api"
+									],
+									"path": [
+										"notifications",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "mark_as_read",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										},
+										{
+											"key": "undefined",
+											"type": "any"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}api/notifications/mark-read/1/",
+									"host": [
+										"{{base_url}}api"
+									],
+									"path": [
+										"notifications",
+										"mark-read",
+										"1",
+										""
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "get_recently_users",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "get_all_user",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								},
+								{
+									"key": "undefined",
+									"type": "any"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \n    \"email\": \"admin@gmail.com\",\n    \"password\": \"admin\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}api/auth/all-users/",
+							"host": [
+								"{{base_url}}api"
+							],
+							"path": [
+								"auth",
+								"all-users",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://10.10.12.9:8002/",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzg0NDUzMjQ3LCJpYXQiOjE3NTI5MTcyNDcsImp0aSI6ImY0MTg1OGYzOGQwZDRlZjNiOGY2YmU2NmJlYWY0ZWIxIiwidXNlcl9pZCI6NX0.g2upcfRyDuyP5LtEwHZR05jZMUWodzVMBaVGQxbehu8",
+			"type": "string"
+		}
+	]
+}

@@ -3,23 +3,26 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { toast } from "sonner";
 import { Shield, Save, Eye, EyeOff, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { passwordValidationSchema } from "@/lib/formDataValidation";
+import { useChangePassword } from "@/hooks/useApi";
+
 type PasswordFormData = z.infer<typeof passwordValidationSchema>;
+
 export default function ChangePassword() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const changePasswordMutation = useChangePassword();
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
     watch,
+    reset,
   } = useForm<PasswordFormData>({
     resolver: zodResolver(passwordValidationSchema),
     defaultValues: {
@@ -28,7 +31,10 @@ export default function ChangePassword() {
       confirmPassword: "",
     },
   });
+
   const newPassword = watch("newPassword");
+  const isLoading = changePasswordMutation.isPending || isSubmitting;
+
   // Password strength validation
   const passwordValidation = {
     hasMinLength: newPassword ? newPassword.length >= 8 : false,
@@ -40,30 +46,19 @@ export default function ChangePassword() {
   };
 
   const onSubmit = async (data: PasswordFormData) => {
-    setIsLoading(true);
-
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Log the form data to console (excluding passwords for security)
-      console.log("Password Change Data:", {
-        passwordLength: data.newPassword.length,
-        timestamp: new Date().toISOString(),
+      const response = await changePasswordMutation.mutateAsync({
+        current_password: data.currentPassword,
+        new_password: data.newPassword,
       });
 
-      toast.success("Password updated successfully!", {
-        description: "Your password has been changed.",
-        duration: 2000,
-      });
+      if (response.success) {
+        // Reset form
+        reset();
+      }
     } catch (error) {
       console.error("Password change error:", error);
-      toast.error("Password update failed", {
-        description: "Please try again later.",
-        duration: 3000,
-      });
-    } finally {
-      setIsLoading(false);
+      // Error is handled by the mutation
     }
   };
 
@@ -254,7 +249,7 @@ export default function ChangePassword() {
               <Button
                 type="submit"
                 className="flex items-center space-x-2 px-4 py-2 sm:py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
-                disabled={isLoading || isSubmitting}
+                disabled={isLoading}
               >
                 <Save className="w-4 h-4" />
                 <span>Update Password</span>

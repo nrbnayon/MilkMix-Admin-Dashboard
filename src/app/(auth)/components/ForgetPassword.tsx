@@ -1,8 +1,6 @@
 "use client";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,12 +10,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { emailValidationSchema } from "@/lib/formDataValidation";
+import { usePasswordResetRequest } from "@/hooks/useApi";
+import { toast } from "sonner";
 
 type ForgetPasswordFormData = z.infer<typeof emailValidationSchema>;
 
 export default function ForgetPassword() {
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const passwordResetMutation = usePasswordResetRequest();
 
   const {
     register,
@@ -31,40 +31,29 @@ export default function ForgetPassword() {
   });
 
   const onSubmit = async (data: ForgetPasswordFormData) => {
-    setIsLoading(true);
-
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Log the form data to console
-      console.log("Forget Password Form Data:", {
+      const response = await passwordResetMutation.mutateAsync({
         email: data.email,
-        timestamp: new Date().toISOString(),
       });
 
-      // Simulate successful OTP send
-      toast.success("OTP sent successfully!", {
-        description: `Verification code sent to ${data.email}`,
-        duration: 2000,
-      });
+      if (response.success) {
+        // Store email in localStorage for OTP verification
+        localStorage.setItem("resetEmail", data.email);
+        localStorage.setItem("otpSentTime", Date.now().toString());
 
-      // Store email in localStorage for OTP verification
-      localStorage.setItem("resetEmail", data.email);
-      localStorage.setItem("otpSentTime", Date.now().toString());
+        // Redirect to OTP verification after a short delay
+        setTimeout(() => {
+          router.push("/verify-otp");
+        }, 1000);
 
-      // Redirect to OTP verification after a short delay
-      setTimeout(() => {
-        router.push("/verify-otp");
-      }, 1000);
+        toast.success("Verification code sent!", {
+          description: `Please check your email ${data.email}`,
+          duration: 2000,
+        });
+      }
     } catch (error) {
       console.error("Forget password error:", error);
-      toast.error("Failed to send OTP", {
-        description: "Please check your email and try again.",
-        duration: 3000,
-      });
-    } finally {
-      setIsLoading(false);
+      // Error is handled by the mutation
     }
   };
 
@@ -145,7 +134,7 @@ export default function ForgetPassword() {
                         : "input-focus"
                     }`}
                     {...register("email")}
-                    disabled={isLoading}
+                    disabled={passwordResetMutation.isPending}
                   />
                   <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                 </div>
@@ -160,9 +149,9 @@ export default function ForgetPassword() {
               <Button
                 type="submit"
                 className="w-full h-10 sm:h-12 bg-primary/80 hover:bg-primary text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-indigo-500/20 text-sm sm:text-base"
-                disabled={isLoading || isSubmitting}
+                disabled={passwordResetMutation.isPending || isSubmitting}
               >
-                {isLoading ? (
+                {passwordResetMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     <span className="hidden sm:inline">Sending OTP...</span>

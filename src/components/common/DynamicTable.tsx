@@ -8,7 +8,7 @@ import {
   ChevronDown,
   Download,
   RefreshCw,
-  Trash2,
+  // Trash2,
   ArrowRight,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -79,6 +79,8 @@ interface DynamicTableProps {
   onRefresh?: () => void;
   buttonText?: string;
   pageUrl?: string;
+  isDataEditable?: boolean;
+  isDataDeletable?: boolean;
   isLoading?: boolean;
 }
 
@@ -95,9 +97,11 @@ export const DynamicTable: React.FC<DynamicTableProps> = ({
   onItemDelete,
   onItemsSelect,
   onExport,
-  onRefresh,
+  // onRefresh,
   buttonText,
   pageUrl,
+  isDataEditable = true,
+  isDataDeletable = true,
   isLoading = false,
 }) => {
   const router = useRouter();
@@ -507,7 +511,7 @@ export const DynamicTable: React.FC<DynamicTableProps> = ({
         <div className="flex items-center gap-2">
           <Avatar className="w-8 h-8 flex-shrink-0">
             <AvatarImage
-              src={item.avatar || "/placeholder.svg"}
+              src={item.avatar || ""}
               alt={value?.toString() || "User"}
             />
             <AvatarFallback>
@@ -680,7 +684,7 @@ export const DynamicTable: React.FC<DynamicTableProps> = ({
           {renderFilters()}
         </div>
         <div className="flex flex-row gap-2 w-full lg:w-auto justify-center lg:justify-end">
-          {onRefresh && (
+          {/* {onRefresh && (
             <Button
               variant="outline"
               size="lg"
@@ -689,7 +693,7 @@ export const DynamicTable: React.FC<DynamicTableProps> = ({
             >
               <RefreshCw className="w-4 h-4" />
             </Button>
-          )}
+          )} */}
           {onExport && (
             <Button
               variant="outline"
@@ -727,7 +731,7 @@ export const DynamicTable: React.FC<DynamicTableProps> = ({
                 Export Selected
               </Button>
             )}
-            {onItemDelete && (
+            {/* {onItemDelete && (
               <Button
                 variant="destructive"
                 size="sm"
@@ -743,7 +747,7 @@ export const DynamicTable: React.FC<DynamicTableProps> = ({
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete Selected
               </Button>
-            )}
+            )} */}
             <Button
               variant="outline"
               size="sm"
@@ -864,8 +868,9 @@ export const DynamicTable: React.FC<DynamicTableProps> = ({
                     {(actions.length > 0 || formFields.length > 0) && (
                       <TableCell className="w-[150px] px-3">
                         <div className="flex items-center justify-center gap-1">
-                          {/* Only show Edit button if formFields exist and no custom edit action */}
+                          {/* Only show Edit button if formFields exist, isDataEditable is true, and no custom edit action */}
                           {formFields.length > 0 &&
+                            isDataEditable &&
                             !actions.some(
                               (action) => action.key === "edit"
                             ) && (
@@ -903,6 +908,7 @@ export const DynamicTable: React.FC<DynamicTableProps> = ({
                           })}
                           {/* Only show Delete button if no custom delete action and onItemDelete exists */}
                           {onItemDelete &&
+                            isDataDeletable &&
                             !actions.some(
                               (action) => action.key === "delete"
                             ) && (

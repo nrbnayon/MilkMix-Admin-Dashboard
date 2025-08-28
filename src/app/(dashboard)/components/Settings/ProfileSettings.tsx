@@ -1,4 +1,3 @@
-// src\app\(dashboard)\components\Settings\ProfileSettings.tsx
 "use client";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -9,15 +8,14 @@ import {
   Edit3,
   Save,
   X,
-  User,
   MapPin,
   Phone,
   FileText,
   Mail,
   Trash2,
   LogOut,
+  User2,
 } from "lucide-react";
-import { toast } from "sonner";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +28,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import Lordicon from "@/components/lordicon/lordicon-wrapper";
+import { useAuth } from "@/contexts/AuthContext";
+import { useUpdateProfile } from "@/hooks/useApi";
+import { toast } from "sonner";
+import { getProfilePictureUrl } from "@/utils/imageUtils";
+import { User } from "@/types/api";
 
 // Validation schema
 const profileSchema = z.object({
@@ -44,8 +47,20 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 export default function ProfileSettings() {
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null); // ADDED: Store the actual file
   const [isUploading, setIsUploading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const updateProfileMutation = useUpdateProfile();
+
+  const {
+    user,
+    logout,
+    updateUser,
+  }: {
+    user: User | null;
+    logout: () => void;
+    updateUser: (user: User) => void;
+  } = useAuth();
 
   const {
     register,
@@ -55,13 +70,16 @@ export default function ProfileSettings() {
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      full_name: "Nrb Nayon",
-      phone: "+880 1234 567890",
-      bio: "Full-stack developer specializing in MERN stack with a passion for creating scalable web applications.",
-      location: "Dhaka, Bangladesh",
+      full_name: user?.user_profile?.name || "",
+      phone: user?.user_profile?.phone_number || "",
+      bio: "",
+      location: "",
     },
   });
 
+  // console.log("User data in profile settings:", user);
+
+  // CORRECTED: Fixed image upload handler
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -76,11 +94,16 @@ export default function ProfileSettings() {
       }
 
       setIsUploading(true);
+
+      // Store the actual file for upload
+      setProfileImageFile(file);
+
+      // Create preview URL
       const reader = new FileReader();
       reader.onload = (e) => {
         setProfileImage(e.target?.result as string);
         setIsUploading(false);
-        toast.success("Profile image updated successfully!");
+        toast.success("Profile image selected successfully!");
       };
       reader.readAsDataURL(file);
     }
@@ -88,20 +111,36 @@ export default function ProfileSettings() {
 
   const onSubmit = async (data: ProfileFormData) => {
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Profile updated:", data);
-      toast.success("Profile updated successfully!");
-      setIsEditing(false);
+      const updateData: {
+        name: string;
+        phone_number?: string;
+        profile_picture?: File;
+      } = {
+        name: data.full_name, 
+        phone_number: data.phone,
+      };
+      if (profileImageFile) {
+        updateData.profile_picture = profileImageFile;
+      }
+
+      const result = await updateProfileMutation.mutateAsync(updateData);
+
+      if (result.success && result.data) {
+        updateUser(result.data);
+        setIsEditing(false);
+        setProfileImageFile(null);
+      }
     } catch (error) {
-      console.log("Faild update profile::", error);
-      toast.error("Failed to update profile. Please try again.");
-    }
+      console.error("Failed to update profile:", error);
+      toast.error("Failed to update profile. Please try again.");}
   };
 
   const handleCancel = () => {
     reset();
     setIsEditing(false);
+    // Clear any uploaded image
+    setProfileImageFile(null);
+    setProfileImage(null);
     toast.info("Changes discarded");
   };
 
@@ -115,8 +154,22 @@ export default function ProfileSettings() {
   };
 
   const handleDeleteConfirm = () => {
-    console.log("account deleted");
+    // Implement account deletion logic here
+    toast.info("Account deletion feature will be implemented");
     setIsDialogOpen(false);
+  };
+
+  // console.log("Admin information::", user);
+
+  // Get the profile picture URL - handle both uploaded images and existing profile pictures
+  const getProfileImageSrc = () => {
+    if (profileImage) {
+      return profileImage;
+    }
+    if (user?.user_profile?.profile_picture) {
+      return getProfilePictureUrl(user.user_profile.profile_picture);
+    }
+    return null;
   };
 
   return (
@@ -155,9 +208,9 @@ export default function ProfileSettings() {
               <div className="text-center">
                 <div className="relative inline-block mb-4">
                   <div className="w-32 h-32 rounded-2xl overflow-hidden bg-slate-100 border-2 border-slate-200">
-                    {profileImage ? (
+                    {getProfileImageSrc() ? (
                       <Image
-                        src={profileImage}
+                        src={getProfileImageSrc()!}
                         alt="Profile"
                         className="w-full h-full object-cover"
                         width={128}
@@ -174,16 +227,19 @@ export default function ProfileSettings() {
                       </div>
                     )}
                   </div>
-                  <label className="absolute -bottom-2 -right-2 w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center cursor-pointer hover:bg-slate-800 transition-colors shadow-lg">
-                    <Camera className="w-5 h-5 text-white" />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      disabled={isUploading}
-                    />
-                  </label>
+                  {/* CORRECTED: Only show upload button when editing */}
+                  {isEditing && (
+                    <label className="absolute -bottom-2 -right-2 w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center cursor-pointer hover:bg-slate-800 transition-colors shadow-lg">
+                      <Camera className="w-5 h-5 text-white" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        disabled={isUploading}
+                      />
+                    </label>
+                  )}
                 </div>
 
                 <h3 className="font-semibold text-slate-900 mb-1">
@@ -212,7 +268,7 @@ export default function ProfileSettings() {
                 <div className="w-full">
                   <button
                     onClick={() => {
-                      console.log("Logout clicked");
+                      logout();
                     }}
                     className="w-full cursor-pointer"
                   >
@@ -319,7 +375,7 @@ export default function ProfileSettings() {
                   <div className="space-y-3">
                     <label className="flex items-center gap-3 text-sm font-medium text-slate-700">
                       <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <User className="w-4 h-4 text-blue-600" />
+                        <User2 className="w-4 h-4 text-blue-600" />
                       </div>
                       Full Name
                     </label>
@@ -350,7 +406,7 @@ export default function ProfileSettings() {
                     </label>
                     <input
                       type="email"
-                      value="nayon@example.com"
+                      value={user?.email || ""}
                       disabled
                       className="w-full px-4 py-3 border-2 border-primary/30 bg-slate-50 rounded-md cursor-not-allowed text-black"
                     />
@@ -446,7 +502,7 @@ export default function ProfileSettings() {
               <div className="w-full">
                 <button
                   onClick={() => {
-                    console.log("Logout clicked");
+                    logout();
                   }}
                   className="w-full cursor-pointer"
                 >

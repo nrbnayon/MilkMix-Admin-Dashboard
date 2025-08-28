@@ -1,4 +1,4 @@
-// src\data\adsData.ts
+// src\data\adsData.ts dummy data for ads management
 import type { GenericDataItem } from "../types/dynamicTableTypes";
 
 export interface AdsDataItem extends GenericDataItem {

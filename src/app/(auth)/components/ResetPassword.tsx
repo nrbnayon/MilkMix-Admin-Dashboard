@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -20,15 +19,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { resetPasswordValidationSchema } from "@/lib/formDataValidation";
+import { usePasswordResetConfirm } from "@/hooks/useApi";
+import { toast } from "sonner";
 
 type ResetPasswordFormData = z.infer<typeof resetPasswordValidationSchema>;
 
 export default function ResetPassword() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const router = useRouter();
+  const passwordResetConfirmMutation = usePasswordResetConfirm();
 
   const {
     register,
@@ -93,43 +94,44 @@ export default function ResetPassword() {
   }, [router, setValue]);
 
   const onSubmit = async (data: ResetPasswordFormData) => {
-    setIsLoading(true);
-
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Get OTP from localStorage (should be stored during verification)
+      const otp = localStorage.getItem("verifiedOTP");
+      if (!otp) {
+        toast.error("Session expired", {
+          description: "Please start the password reset process again.",
+        });
+        router.push("/forgot-password");
+        return;
+      }
 
-      // Log the form data to console (excluding password for security)
-      console.log("Reset Password Data:", {
+      const response = await passwordResetConfirmMutation.mutateAsync({
         email: data.email,
-        passwordLength: data.newPassword.length,
-        timestamp: new Date().toISOString(),
+        otp,
+        new_password: data.newPassword,
       });
 
-      // Simulate successful password reset
-      toast.success("Password reset successful!", {
-        description: "Your password has been updated successfully.",
-        duration: 2000,
-      });
+      if (response.success) {
+        toast.success("Password reset successful!", {
+          description: "Your password has been updated successfully.",
+          duration: 2000,
+        });
 
-      // Clear all reset-related data from localStorage
-      localStorage.removeItem("resetEmail");
-      localStorage.removeItem("otpVerified");
-      localStorage.removeItem("verificationTime");
-      localStorage.removeItem("otpSentTime");
+        // Clear all reset-related data from localStorage
+        localStorage.removeItem("resetEmail");
+        localStorage.removeItem("otpVerified");
+        localStorage.removeItem("verificationTime");
+        localStorage.removeItem("otpSentTime");
+        localStorage.removeItem("verifiedOTP");
 
-      // Redirect to success page after a short delay
-      setTimeout(() => {
-        router.push("/reset-success");
-      }, 1000);
+        // Redirect to success page after a short delay
+        setTimeout(() => {
+          router.push("/reset-success");
+        }, 1000);
+      }
     } catch (error) {
       console.error("Reset password error:", error);
-      toast.error("Password reset failed", {
-        description: "Please try again later.",
-        duration: 3000,
-      });
-    } finally {
-      setIsLoading(false);
+      // Error is handled by the mutation
     }
   };
 
@@ -219,13 +221,17 @@ export default function ResetPassword() {
                     type={showNewPassword ? "text" : "password"}
                     className="pl-10 sm:pl-12 pr-10 sm:pr-12 h-10 sm:h-12 rounded-md border-primary/30 focus-visible:border-primary bg-input text-foreground focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm sm:text-base"
                     placeholder="Enter your new password"
-                    disabled={isLoading}
+                    disabled={
+                      passwordResetConfirmMutation.isPending || isSubmitting
+                    }
                   />
                   <button
                     type="button"
                     onClick={() => setShowNewPassword(!showNewPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    disabled={isLoading}
+                    disabled={
+                      passwordResetConfirmMutation.isPending || isSubmitting
+                    }
                   >
                     {showNewPassword ? (
                       <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -253,13 +259,17 @@ export default function ResetPassword() {
                     type={showConfirmPassword ? "text" : "password"}
                     className="pl-10 sm:pl-12 pr-10 sm:pr-12 h-10 sm:h-12 rounded-md border-primary/30 focus-visible:border-primary bg-input text-foreground focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm sm:text-base"
                     placeholder="Confirm your new password"
-                    disabled={isLoading}
+                    disabled={
+                      passwordResetConfirmMutation.isPending || isSubmitting
+                    }
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    disabled={isLoading}
+                    disabled={
+                      passwordResetConfirmMutation.isPending || isSubmitting
+                    }
                   >
                     {showConfirmPassword ? (
                       <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -324,9 +334,11 @@ export default function ResetPassword() {
               <Button
                 type="submit"
                 className="w-full h-10 sm:h-12 bg-primary/80 hover:bg-primary text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-indigo-500/20 text-sm sm:text-base"
-                disabled={isLoading || isSubmitting}
+                disabled={
+                  passwordResetConfirmMutation.isPending || isSubmitting
+                }
               >
-                {isLoading ? (
+                {passwordResetConfirmMutation.isPending || isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     <span className="hidden sm:inline">

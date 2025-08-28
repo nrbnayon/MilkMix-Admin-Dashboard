@@ -1,31 +1,60 @@
+// src/components/dashboard/dashboard-header.tsx
+"use client";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { cn } from "@/lib/utils";
 import Lordicon from "@/components/lordicon/lordicon-wrapper";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+
+type UserProfile = {
+  name?: string;
+  // add other fields if needed
+};
+
+type User = {
+  user_profile?: UserProfile;
+  name?: string;
+  first_name?: string;
+  full_name?: string;
+  // add other fields if needed
+};
 
 export default function DashboardHeader({
   title = "Welcome",
-  subtitle=''
+  subtitle = "",
 }: {
   title?: string;
   subtitle?: string;
 }) {
+  const { user, isLoading } = useAuth() as { user?: User; isLoading: boolean };
+
+  // console.log("DashboardHeader user:", user);
+
+  const getUserName = () => {
+    if (!user) return null;
+    return user.user_profile?.name || null;
+  };
+
+  const userName = getUserName();
+
   return (
     <header
       className={cn(
-        "md:sticky top-0 z-50 p-2 md:p-4 w-full transition-all duration-200bg-white/10 dark:bg-background/10 backdrop-blur-3xl"
+        "md:sticky top-0 z-50 p-2 md:p-4 w-full transition-all duration-200 bg-white/10 dark:bg-background/10 backdrop-blur-3xl"
       )}
     >
       <div className=" mx-auto">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl md:text-3xl font-bold tracking-tight">
-              {title}
+              {isLoading
+                ? "Loading..."
+                : userName
+                ? `Welcome ${userName}`
+                : title}
             </h1>
             {subtitle && (
-              <h3 className="text-sm md:text-base font-medium">
-                {title}
-              </h3>
+              <h3 className="text-sm md:text-base font-medium">{subtitle}</h3>
             )}
           </div>
           {/* Mobile Navigation */}

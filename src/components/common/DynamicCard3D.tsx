@@ -298,7 +298,7 @@ export function DynamicCard3D({
               {typeof image === "string" && image && (
                 <CardItem translateZ="100" className="w-full mb-4 rounded-xl">
                   <Image
-                    src={image || "/placeholder.svg"}
+                    src={image || ""}
                     alt={typeof title === "string" ? title : "Image"}
                     width={400}
                     height={200}
