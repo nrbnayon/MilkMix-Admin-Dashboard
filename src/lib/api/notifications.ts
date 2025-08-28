@@ -16,3 +16,11 @@ export class NotificationsAPI {
     );
   }
 }
+
+export class SupportAPI {
+  static async getAll() {
+    return apiClient.get<Notification[]>(
+      API_CONFIG.ENDPOINTS.SUPPORT.LIST
+    );
+  }
+}

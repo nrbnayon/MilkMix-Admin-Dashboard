@@ -127,9 +127,6 @@ export default function UserManagement({
     }
   }, [usersResponse]);
 
-  console.log("Users data:", usersResponse);
-  console.log("Transformed users:", users);
-
   // Delete user function
   const deleteUser = async (userId: string): Promise<boolean> => {
     try {
@@ -433,7 +430,7 @@ export default function UserManagement({
       icon: <Eye className="w-4 h-4" />,
       variant: "ghost",
       onClick: (item) => {
-        console.log("View user:", item.name, "ID:", item.userId);
+        console.log("View user:", item.id);
         // Navigate to user details page or open modal
       },
     },
@@ -457,7 +454,7 @@ export default function UserManagement({
 
   const handleDataChange = (newData: GenericDataItem[]) => {
     setUsers(newData);
-    console.log("Users data changed:", newData.length, "users");
+    // console.log("Users data changed:", newData.length, "users");
   };
 
   const handleUserDelete = async (userId: string) => {
@@ -467,7 +464,7 @@ export default function UserManagement({
       if (success) {
         const updatedData = users.filter((user) => user.id !== userId);
         setUsers(updatedData);
-        console.log("User deleted successfully:", userId);
+        // console.log("User deleted successfully:", userId);
         if (refetch) {
           refetch();
         }
@@ -481,13 +478,13 @@ export default function UserManagement({
     }
   };
 
-  const handleUsersSelect = (selectedIds: string[]) => {
-    console.log("Selected users:", selectedIds.length, "users");
-    // Handle bulk operations like bulk delete, bulk status change, etc.
-  };
+  // const handleUsersSelect = (selectedIds: string[]) => {
+  //   console.log("Selected users:", selectedIds.length, "users");
+  //   // Handle bulk operations like bulk delete, bulk status change, etc.
+  // };
 
   const handleExport = (exportData: GenericDataItem[]) => {
-    console.log("Exporting users:", exportData.length, "users");
+    // console.log("Exporting users:", exportData.length, "users");
 
     // Convert data to CSV format
     const headers = userColumns.map((col) => col.label).join(",");
@@ -521,7 +518,7 @@ export default function UserManagement({
   };
 
   const handleRefresh = () => {
-    console.log("Refreshing users data...");
+    // console.log("Refreshing users data...");
     refetch();
   };
 
@@ -609,7 +606,7 @@ export default function UserManagement({
     },
   ];
 
-  console.log("User Stats:", stats);
+  // console.log("User Stats:", stats);
 
   // Handle loading state
   if (isLoading) {
@@ -670,7 +667,7 @@ export default function UserManagement({
         onDataChange={handleDataChange}
         onItemDelete={handleUserDelete}
         isDataEditable={false}
-        onItemsSelect={handleUsersSelect}
+        // onItemsSelect={handleUsersSelect}
         onExport={handleExport}
         onRefresh={handleRefresh}
         buttonText={buttonText}

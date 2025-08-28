@@ -126,7 +126,7 @@ export default function UserSubscriptions({
     }
   }, [subscriptionsResponse]);
 
-  console.log("All subscriptionsResponse Users:", subscriptionsResponse);
+  // console.log("All subscriptionsResponse Users:", subscriptionsResponse);
 
   // Column Configuration for User Table
   const userColumns: ColumnConfig[] = [
@@ -440,18 +440,18 @@ export default function UserSubscriptions({
 
   const handleDataChange = (newData: GenericDataItem[]) => {
     setUsers(newData as TransformedUserData[]);
-    console.log("Users data changed:", newData);
+    // console.log("Users data changed:", newData);
   };
 
   const handleUsersSelect = (selectedIds: string[]) => {
-    console.log("Selected users:", selectedIds);
+    // console.log("Selected users:", selectedIds);
     const selectedUsers = users.filter((user) => selectedIds.includes(user.id));
-    console.log("Selected user objects:", selectedUsers);
+    // console.log("Selected user objects:", selectedUsers);
     // Handle bulk operations like bulk status update, export, etc.
   };
 
   const handleExport = (exportData: GenericDataItem[]) => {
-    console.log("Exporting users:", exportData);
+    // console.log("Exporting users:", exportData);
 
     // Convert data to CSV format
     const headers = userColumns.map((col) => col.label).join(",");
@@ -486,7 +486,6 @@ export default function UserSubscriptions({
   };
 
   const handleRefresh = () => {
-    console.log("Refreshing subscription data...");
     refetch();
   };
 

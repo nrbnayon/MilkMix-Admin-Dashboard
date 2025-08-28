@@ -13,6 +13,9 @@ type UserProfile = {
 
 type User = {
   user_profile?: UserProfile;
+  name?: string;
+  first_name?: string;
+  full_name?: string;
   // add other fields if needed
 };
 
@@ -23,21 +26,32 @@ export default function DashboardHeader({
   title?: string;
   subtitle?: string;
 }) {
-  const { user } = useAuth() as { user?: User };
+  const { user, isLoading } = useAuth() as { user?: User; isLoading: boolean };
 
-  console.log("DashboardHeader user:", user);
+  // console.log("DashboardHeader user:", user);
+
+  const getUserName = () => {
+    if (!user) return null;
+    return user.user_profile?.name || null;
+  };
+
+  const userName = getUserName();
 
   return (
     <header
       className={cn(
-        "md:sticky top-0 z-50 p-2 md:p-4 w-full transition-all duration-200bg-white/10 dark:bg-background/10 backdrop-blur-3xl"
+        "md:sticky top-0 z-50 p-2 md:p-4 w-full transition-all duration-200 bg-white/10 dark:bg-background/10 backdrop-blur-3xl"
       )}
     >
       <div className=" mx-auto">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl md:text-3xl font-bold tracking-tight">
-              {user ? `Welcome ${user.user_profile?.name}` : title}
+              {isLoading
+                ? "Loading..."
+                : userName
+                ? `Welcome ${userName}`
+                : title}
             </h1>
             {subtitle && (
               <h3 className="text-sm md:text-base font-medium">{subtitle}</h3>

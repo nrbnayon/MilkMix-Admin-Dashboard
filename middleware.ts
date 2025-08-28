@@ -189,6 +189,7 @@ export async function middleware(request: NextRequest) {
   // }
 
   // For all other routes not explicitly defined, require authentication
+  console.log("Middleware - Undefined route accessed:", pathname, user);
   if (!user) {
     const redirectUrl = new URL("/login", request.url);
     redirectUrl.searchParams.set("redirect", pathname);

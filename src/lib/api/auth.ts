@@ -1,5 +1,5 @@
 // src/lib/api/auth.ts
-import { apiClient } from "./client";
+import { apiClient, ApiResponse } from "./client";
 import { API_CONFIG } from "./config";
 import type {
   LoginRequest,
@@ -22,6 +22,8 @@ export class AuthAPI {
       credentials,
       false // Don't include auth header for login
     );
+
+    // console.log("Login response:", response);
 
     if (response.success && response.data) {
       // Store tokens with correct property names
@@ -54,19 +56,39 @@ export class AuthAPI {
     return apiClient.get<User>(API_CONFIG.ENDPOINTS.AUTH.PROFILE);
   }
 
-  static async updateProfile(data: ProfileUpdateRequest) {
-    const formData = new FormData();
+  static async updateProfile(
+    data: ProfileUpdateRequest
+  ): Promise<ApiResponse<User>> {
+    // Check if we have a profile picture file to upload
+    const hasProfilePicture = data.profile_picture instanceof File;
 
-    if (data.first_name) formData.append("first_name", data.first_name);
-    if (data.last_name) formData.append("last_name", data.last_name);
-    if (data.phone_number) formData.append("phone_number", data.phone_number);
-    if (data.profile_picture)
-      formData.append("profile_picture", data.profile_picture);
+    if (hasProfilePicture) {
+      // Use FormData for file uploads
+      const formData = new FormData();
 
-    return apiClient.postFormData<User>(
-      API_CONFIG.ENDPOINTS.AUTH.PROFILE,
-      formData
-    );
+      // Add text fields - use 'name' instead of first_name/last_name
+      if (data.name) {
+        formData.append("name", data.name);
+      }
+      if (data.phone_number) {
+        formData.append("phone_number", data.phone_number);
+      }
+
+      // Add profile picture file
+      if (data.profile_picture instanceof File) {
+        formData.append("profile_picture", data.profile_picture);
+      }
+
+      return apiClient.putFormData(API_CONFIG.ENDPOINTS.AUTH.PROFILE, formData);
+    } else {
+      // Use JSON for text-only updates
+      const jsonData = {
+        name: data.name,
+        phone_number: data.phone_number,
+      };
+
+      return apiClient.put(API_CONFIG.ENDPOINTS.AUTH.PROFILE, jsonData);
+    }
   }
 
   static async getAllUsers() {
@@ -82,6 +104,7 @@ export class AuthAPI {
   }
 
   static async requestPasswordReset(data: PasswordResetRequest) {
+    // console.log("Reset request data:", data);
     return apiClient.post(
       API_CONFIG.ENDPOINTS.AUTH.PASSWORD_RESET_REQUEST,
       data,

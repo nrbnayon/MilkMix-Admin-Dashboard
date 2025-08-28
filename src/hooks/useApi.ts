@@ -4,7 +4,7 @@ import { AuthAPI } from "@/lib/api/auth";
 import { MilkHistoryAPI } from "@/lib/api/milkHistory";
 import { MembersAPI } from "@/lib/api/members";
 import { ConsultantsAPI } from "@/lib/api/consultants";
-import { NotificationsAPI } from "@/lib/api/notifications";
+import { NotificationsAPI, SupportAPI } from "@/lib/api/notifications";
 import { SubscriptionsAPI } from "@/lib/api/subscriptions";
 import { useAuth as useAuthContext } from "@/contexts/AuthContext";
 import type {
@@ -44,6 +44,9 @@ export const QUERY_KEYS = {
   },
   SUBSCRIPTIONS: {
     ALL: ["subscriptions"],
+  },
+  SUPPORT: {
+    ALL: ["support"],
   },
 } as const;
 
@@ -127,14 +130,53 @@ export function useVerifyOTP() {
 // Password Reset Hooks
 export function usePasswordResetRequest() {
   return useMutation({
-    mutationFn: (data: PasswordResetRequest) =>
-      AuthAPI.requestPasswordReset(data),
+    mutationFn: async (data: PasswordResetRequest) => {
+      const response = await AuthAPI.requestPasswordReset(data);
+
+      // Additional check in case the API client doesn't throw on errors
+      if (response.status >= 400 || !response.success) {
+        const errorMsg =
+          response.data &&
+          typeof response.data === "object" &&
+          response.data !== null &&
+          "error" in response.data
+            ? (response.data as { error?: string }).error
+            : "Request failed";
+        const error = new Error(errorMsg) as Error & { response?: unknown };
+        error.response = response;
+        throw error;
+      }
+
+      return response;
+    },
     onSuccess: () => {
       toast.success("Password reset email sent!");
     },
-    onError: (error) => {
-      toast.error("Failed to send reset email", {
-        description: error instanceof Error ? error.message : "Unknown error",
+    onError: (error: any) => {
+      const errorMessage = "Failed to send reset email";
+      let errorDescription = "Unknown error";
+
+      // console.log("Password reset error details:", error);
+
+      // Handle API response errors
+      if (error?.response?.data) {
+        const errorData = error.response.data;
+
+        if (errorData.error) {
+          errorDescription = errorData.error;
+        } else if (errorData.details?.email) {
+          errorDescription = Array.isArray(errorData.details.email)
+            ? errorData.details.email[0]
+            : errorData.details.email;
+        }
+      }
+      // Handle network or other errors
+      else if (error instanceof Error) {
+        errorDescription = error.message;
+      }
+
+      toast.error(errorMessage, {
+        description: errorDescription,
       });
     },
   });
@@ -288,6 +330,16 @@ export function useNotifications() {
   return useQuery({
     queryKey: QUERY_KEYS.NOTIFICATIONS.ALL,
     queryFn: () => NotificationsAPI.getAll(),
+    staleTime: 1 * 60 * 1000, // 1 minute
+    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+  });
+}
+
+// Support Hooks
+export function useSupport() {
+  return useQuery({
+    queryKey: QUERY_KEYS.SUPPORT.ALL,
+    queryFn: () => SupportAPI.getAll(),
     staleTime: 1 * 60 * 1000, // 1 minute
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });

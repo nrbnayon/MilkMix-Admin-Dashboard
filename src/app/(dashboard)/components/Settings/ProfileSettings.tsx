@@ -47,6 +47,7 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 export default function ProfileSettings() {
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null); // ADDED: Store the actual file
   const [isUploading, setIsUploading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const updateProfileMutation = useUpdateProfile();
@@ -76,8 +77,9 @@ export default function ProfileSettings() {
     },
   });
 
-  console.log("User data in profile settings:", user);
+  // console.log("User data in profile settings:", user);
 
+  // CORRECTED: Fixed image upload handler
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -92,11 +94,16 @@ export default function ProfileSettings() {
       }
 
       setIsUploading(true);
+
+      // Store the actual file for upload
+      setProfileImageFile(file);
+
+      // Create preview URL
       const reader = new FileReader();
       reader.onload = (e) => {
         setProfileImage(e.target?.result as string);
         setIsUploading(false);
-        toast.success("Profile image updated successfully!");
+        toast.success("Profile image selected successfully!");
       };
       reader.readAsDataURL(file);
     }
@@ -104,21 +111,16 @@ export default function ProfileSettings() {
 
   const onSubmit = async (data: ProfileFormData) => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const updateData: any = {
-        first_name: data.full_name.split(" ")[0],
-        last_name: data.full_name.split(" ").slice(1).join(" "),
+      const updateData: {
+        name: string;
+        phone_number?: string;
+        profile_picture?: File;
+      } = {
+        name: data.full_name, 
         phone_number: data.phone,
       };
-
-      // Add profile picture if uploaded
-      if (profileImage && profileImage.startsWith("data:")) {
-        // Convert base64 to file
-        const response = await fetch(profileImage);
-        const blob = await response.blob();
-        updateData.profile_picture = new File([blob], "profile.jpg", {
-          type: "image/jpeg",
-        });
+      if (profileImageFile) {
+        updateData.profile_picture = profileImageFile;
       }
 
       const result = await updateProfileMutation.mutateAsync(updateData);
@@ -126,16 +128,19 @@ export default function ProfileSettings() {
       if (result.success && result.data) {
         updateUser(result.data);
         setIsEditing(false);
+        setProfileImageFile(null);
       }
     } catch (error) {
       console.error("Failed to update profile:", error);
-      // Error is handled by the mutation
-    }
+      toast.error("Failed to update profile. Please try again.");}
   };
 
   const handleCancel = () => {
     reset();
     setIsEditing(false);
+    // Clear any uploaded image
+    setProfileImageFile(null);
+    setProfileImage(null);
     toast.info("Changes discarded");
   };
 
@@ -154,7 +159,7 @@ export default function ProfileSettings() {
     setIsDialogOpen(false);
   };
 
-  console.log("Admin information::", user);
+  // console.log("Admin information::", user);
 
   // Get the profile picture URL - handle both uploaded images and existing profile pictures
   const getProfileImageSrc = () => {
@@ -222,16 +227,19 @@ export default function ProfileSettings() {
                       </div>
                     )}
                   </div>
-                  <label className="absolute -bottom-2 -right-2 w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center cursor-pointer hover:bg-slate-800 transition-colors shadow-lg">
-                    <Camera className="w-5 h-5 text-white" />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      disabled={isUploading}
-                    />
-                  </label>
+                  {/* CORRECTED: Only show upload button when editing */}
+                  {isEditing && (
+                    <label className="absolute -bottom-2 -right-2 w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center cursor-pointer hover:bg-slate-800 transition-colors shadow-lg">
+                      <Camera className="w-5 h-5 text-white" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        disabled={isUploading}
+                      />
+                    </label>
+                  )}
                 </div>
 
                 <h3 className="font-semibold text-slate-900 mb-1">

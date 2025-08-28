@@ -107,18 +107,10 @@ export default function ManagementAds({
       author: "Admin",
     })) || [];
 
-  console.log("Fetched all ads:", ads);
+  // console.log("Fetched all ads:", ads);
 
   // Check if we should show Add Ads button
   const shouldShowAddButton = ads.length < showAds;
-  console.log(
-    "Should show Add Ads button:",
-    shouldShowAddButton,
-    "Current ads:",
-    ads.length,
-    "Max ads:",
-    showAds
-  );
 
   // Column Configuration for Ads
   const adsColumns: ColumnConfig[] = [
@@ -418,7 +410,6 @@ export default function ManagementAds({
   // FIXED: Handle creating new ad with proper image handling
   const handleCreateAd = async (data: Record<string, unknown>) => {
     try {
-      console.log("Creating ad with data:", data);
 
       // Handle image data - convert base64 to File if necessary
       let imageFile: File | null = null;
@@ -457,14 +448,8 @@ export default function ManagementAds({
           : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       };
 
-      console.log("Sending create data:", {
-        ...createData,
-        image: imageFile.name, // Don't log the entire file object
-      });
-
       await createMutation.mutateAsync(createData);
       setCreateModalOpen(false);
-      console.log("Advertisement created successfully");
     } catch (error) {
       console.error("Failed to create advertisement:", error);
       throw error; // Let the modal handle the error display
@@ -473,7 +458,6 @@ export default function ManagementAds({
 
   // Handle editing ad
   const handleEditAd = (ad: AdsDataItem) => {
-    console.log("Editing ad:", ad);
     setEditingAd(ad);
     setEditModalOpen(true);
   };
@@ -483,9 +467,6 @@ export default function ManagementAds({
     if (!editingAd) return;
 
     try {
-      console.log("Updating ad with data:", data);
-      console.log("Current editing ad:", editingAd);
-
       const updateData: Record<string, unknown> = {};
 
       // Only include fields that have changed
@@ -527,15 +508,8 @@ export default function ManagementAds({
         } else if (imageData instanceof File) {
           updateData.image = imageData;
         }
-        // If imageData is a URL string (existing image), don't include it in update
       }
 
-      console.log("Sending update data:", {
-        ...updateData,
-        image: updateData.image
-          ? (updateData.image as File).name
-          : "No image update",
-      });
 
       await updateMutation.mutateAsync({
         id: Number(editingAd.id),
@@ -544,7 +518,6 @@ export default function ManagementAds({
 
       setEditModalOpen(false);
       setEditingAd(null);
-      console.log("Advertisement updated successfully");
     } catch (error) {
       console.error("Failed to update advertisement:", error);
       throw error; // Let the modal handle the error display
@@ -554,9 +527,7 @@ export default function ManagementAds({
   // Handle deleting ad
   const handleDeleteAd = async (adId: number) => {
     try {
-      console.log("Deleting ad with id:", adId);
       await deleteMutation.mutateAsync(adId);
-      console.log("Advertisement deleted successfully");
     } catch (error) {
       console.error("Failed to delete advertisement:", error);
     }

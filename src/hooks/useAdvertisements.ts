@@ -20,16 +20,13 @@ export function useAdvertisements() {
     queryFn: async () => {
       try {
         const data = await AdvertisementsAPI.getAll();
-        console.log("Successfully fetched advertisements:", data);
         return data;
       } catch (error) {
-        console.error("Query error - advertisements:", error);
         throw error;
       }
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
     retry: (failureCount, error) => {
-      console.error("Failed to fetch advertisements:", error);
       return failureCount < 3;
     },
   });
@@ -42,16 +39,13 @@ export function useLatestAdvertisements() {
     queryFn: async () => {
       try {
         const data = await AdvertisementsAPI.getLatest();
-        console.log("Successfully fetched latest advertisements:", data);
         return data;
       } catch (error) {
-        console.error("Query error - latest advertisements:", error);
         throw error;
       }
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
     retry: (failureCount, error) => {
-      console.error("Failed to fetch latest advertisements:", error);
       return failureCount < 3;
     },
   });
@@ -63,15 +57,10 @@ export function useCreateAdvertisement() {
 
   return useMutation({
     mutationFn: (data: CreateAdvertisementRequest) => {
-      console.log("Creating advertisement mutation with data:", data);
       return AdvertisementsAPI.create(data);
     },
-    onMutate: () => {
-      console.log("Starting create advertisement mutation...");
-    },
+    onMutate: () => {},
     onSuccess: (data) => {
-      console.log("Advertisement created successfully:", data);
-
       // Invalidate and refetch queries
       queryClient.invalidateQueries({
         queryKey: ADVERTISEMENTS_QUERY_KEYS.ALL,
@@ -83,7 +72,6 @@ export function useCreateAdvertisement() {
       toast.success("Advertisement created successfully!");
     },
     onError: (error) => {
-      console.error("Failed to create advertisement:", error);
       toast.error("Failed to create advertisement", {
         description:
           error instanceof Error ? error.message : "Unknown error occurred",
@@ -104,20 +92,10 @@ export function useUpdateAdvertisement() {
       id: number;
       data: UpdateAdvertisementRequest;
     }) => {
-      console.log(
-        "Updating advertisement mutation with id:",
-        id,
-        "data:",
-        data
-      );
       return AdvertisementsAPI.update(id, data);
     },
-    onMutate: ({ id }) => {
-      console.log("Starting update advertisement mutation for id:", id);
-    },
-    onSuccess: (data, ) => {
-      console.log("Advertisement updated successfully:", data);
-
+    onMutate: ({ id }) => {},
+    onSuccess: (data) => {
       // Invalidate and refetch queries
       queryClient.invalidateQueries({
         queryKey: ADVERTISEMENTS_QUERY_KEYS.ALL,
@@ -129,12 +107,6 @@ export function useUpdateAdvertisement() {
       toast.success("Advertisement updated successfully!");
     },
     onError: (error, variables) => {
-      console.error(
-        "Failed to update advertisement with id:",
-        variables.id,
-        "error:",
-        error
-      );
       toast.error("Failed to update advertisement", {
         description:
           error instanceof Error ? error.message : "Unknown error occurred",
@@ -149,15 +121,10 @@ export function useDeleteAdvertisement() {
 
   return useMutation({
     mutationFn: (id: number) => {
-      console.log("Deleting advertisement mutation with id:", id);
       return AdvertisementsAPI.delete(id);
     },
-    onMutate: (id) => {
-      console.log("Starting delete advertisement mutation for id:", id);
-    },
+    onMutate: (id) => {},
     onSuccess: (data, id) => {
-      console.log("Advertisement deleted successfully, id:", id);
-
       // Invalidate and refetch queries
       queryClient.invalidateQueries({
         queryKey: ADVERTISEMENTS_QUERY_KEYS.ALL,
@@ -169,12 +136,6 @@ export function useDeleteAdvertisement() {
       toast.success("Advertisement deleted successfully!");
     },
     onError: (error, id) => {
-      console.error(
-        "Failed to delete advertisement with id:",
-        id,
-        "error:",
-        error
-      );
       toast.error("Failed to delete advertisement", {
         description:
           error instanceof Error ? error.message : "Unknown error occurred",

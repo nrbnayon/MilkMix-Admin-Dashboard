@@ -109,10 +109,8 @@ class AdvertisementAPI {
       }
 
       const data = await response.json();
-      console.log("Fetched advertisements from API:", data);
       return data;
     } catch (error) {
-      console.error("Error fetching advertisements:", error);
       throw error;
     }
   }
@@ -136,10 +134,8 @@ class AdvertisementAPI {
       }
 
       const data = await response.json();
-      console.log("Fetched latest advertisements from API:", data);
       return data;
     } catch (error) {
-      console.error("Error fetching latest advertisements:", error);
       throw error;
     }
   }
@@ -147,14 +143,6 @@ class AdvertisementAPI {
   // Enhanced create method with base64 and File support
   async create(data: CreateAdvertisementRequest): Promise<Advertisement> {
     try {
-      console.log("Creating advertisement with data:", {
-        ...data,
-        image:
-          data.image instanceof File
-            ? data.image.name
-            : "Base64 or invalid image",
-      });
-
       // Process the image input (handles both File and base64 string)
       const imageFile = this.processImageInput(
         data.image,
@@ -172,18 +160,6 @@ class AdvertisementAPI {
       formData.append("start_date", data.start_date);
       formData.append("end_date", data.end_date);
 
-      // Log FormData contents for debugging
-      console.log("FormData contents:");
-      for (const [key, value] of formData.entries()) {
-        if (value instanceof File) {
-          console.log(
-            `${key}: File - ${value.name} (${value.size} bytes, ${value.type})`
-          );
-        } else {
-          console.log(`${key}: ${value}`);
-        }
-      }
-
       const response = await fetch(`${this.baseUrl}/api/advertisements/`, {
         method: "POST",
         headers: {
@@ -195,22 +171,14 @@ class AdvertisementAPI {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(
-          "Create advertisement failed:",
-          response.status,
-          response.statusText,
-          errorText
-        );
         throw new Error(
           `Failed to create advertisement: ${response.status} ${response.statusText}. ${errorText}`
         );
       }
 
       const result = await response.json();
-      console.log("Advertisement created successfully:", result);
       return result;
     } catch (error) {
-      console.error("Error creating advertisement:", error);
       throw error;
     }
   }
@@ -221,16 +189,6 @@ class AdvertisementAPI {
     data: UpdateAdvertisementRequest
   ): Promise<Advertisement> {
     try {
-      console.log("Updating advertisement with id:", id, "data:", {
-        ...data,
-        image:
-          data.image instanceof File
-            ? data.image.name
-            : data.image
-            ? "Base64 or non-file image data"
-            : "No image",
-      });
-
       const formData = new FormData();
 
       // Only append fields that are provided and have changed
@@ -262,11 +220,6 @@ class AdvertisementAPI {
         formData.append("image", imageFile, imageFile.name);
       }
 
-      console.log(
-        "Sending FormData to update API:",
-        Object.fromEntries(formData.entries())
-      );
-
       // Using PUT method instead of POST for update
       const response = await fetch(
         `${this.baseUrl}/api/advertisements/${id}/`,
@@ -281,30 +234,20 @@ class AdvertisementAPI {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(
-          "Update advertisement failed:",
-          response.status,
-          response.statusText,
-          errorText
-        );
         throw new Error(
           `Failed to update advertisement: ${response.status} ${response.statusText}`
         );
       }
 
       const result = await response.json();
-      console.log("Advertisement updated successfully:", result);
       return result;
     } catch (error) {
-      console.error("Error updating advertisement:", error);
       throw error;
     }
   }
 
   async delete(id: number): Promise<void> {
     try {
-      console.log("Deleting advertisement with id:", id);
-
       const response = await fetch(
         `${this.baseUrl}/api/advertisements/${id}/`,
         {
@@ -317,20 +260,11 @@ class AdvertisementAPI {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(
-          "Delete advertisement failed:",
-          response.status,
-          response.statusText,
-          errorText
-        );
         throw new Error(
           `Failed to delete advertisement: ${response.status} ${response.statusText}`
         );
       }
-
-      console.log("Advertisement deleted successfully");
     } catch (error) {
-      console.error("Error deleting advertisement:", error);
       throw error;
     }
   }

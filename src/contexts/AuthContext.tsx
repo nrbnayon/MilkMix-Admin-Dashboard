@@ -1,6 +1,7 @@
 // src/contexts/AuthContext.tsx
 "use client";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import type React from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { AuthAPI } from "@/lib/api/auth";
 import type { User, LoginRequest, RegisterRequest } from "@/types/api";
 import { toast } from "sonner";
@@ -59,11 +60,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       const response = await AuthAPI.login(credentials);
 
-      console.log("Login response:", response.data);
+      // console.log("Login response:", response.data);
       if (response.success && response.data) {
-        setUser(response.data.profile || response.data);
+        const profileData = response.data.profile;
+
+        // Create user object that matches the structure returned by getProfile()
+        const normalizedUser: User = {
+          id: typeof response.data.profile?.id === "number" ? response.data.profile.id : 0,
+          name: profileData?.name ?? "", // Add name property at top level
+          email: credentials.email,
+          role: response.data.role as User["role"],
+          is_verified: response.data.is_verified,
+          user_profile: {
+            name: profileData?.name,
+            phone_number: profileData?.phone_number,
+            profile_picture: profileData?.profile_picture,
+          },
+        };
+        setUser(normalizedUser);
+
+        // Store the normalized user data
+        localStorage.setItem("user", JSON.stringify(normalizedUser));
+
         toast.success("Login successful!", {
-          description: `Welcome back, ${response.data?.profile?.name}!`,
+          description: `Welcome back, ${normalizedUser.user_profile?.name}!`,
         });
         return true;
       } else {

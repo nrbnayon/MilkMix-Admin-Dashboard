@@ -1,4 +1,5 @@
 // src/lib/api/client.ts
+import { ApiError } from "@/types/apiError";
 import { API_CONFIG } from "./config";
 
 export interface ApiResponse<T = unknown> {
@@ -7,12 +8,6 @@ export interface ApiResponse<T = unknown> {
   error?: string;
   status: number;
   success: boolean;
-}
-
-export interface ApiError {
-  message: string;
-  status: number;
-  details?: unknown;
 }
 
 class ApiClient {
@@ -61,23 +56,34 @@ class ApiClient {
         };
       }
 
-      // Handle error responses
+      // Handle error responses - Create error object and throw it
       const errorMessage = isJson
         ? data.message || data.error || data.detail || "An error occurred"
         : data || "An error occurred";
 
-      return {
-        error: errorMessage,
+      // Create a custom error object with response details
+      const apiError = new ApiError(errorMessage, {
+        data,
         status: response.status,
-        success: false,
-      };
+        statusText: response.statusText,
+      });
+
+      // Throw the error instead of returning error response
+      throw apiError;
     } catch (error) {
+      // If it's already our custom ApiError, re-throw it
+      if (error instanceof ApiError) {
+        throw error;
+      }
+
+      // Handle JSON parsing errors
       console.error("Error parsing response:", error);
-      return {
-        error: "Failed to parse response",
+      const parseError = new ApiError("Failed to parse response", {
+        data: null,
         status: response.status,
-        success: false,
-      };
+        statusText: response.statusText,
+      });
+      throw parseError;
     }
   }
 
@@ -101,9 +107,14 @@ class ApiClient {
       const response = await fetch(url, config);
       return await this.handleResponse<T>(response);
     } catch (error) {
+      // Handle network and timeout errors
       if (error instanceof Error) {
         if (error.name === "AbortError") {
           throw new Error("Request timeout");
+        }
+        // If it's our custom ApiError, re-throw it
+        if (error instanceof ApiError) {
+          throw error;
         }
         throw new Error(error.message);
       }
@@ -152,11 +163,15 @@ class ApiClient {
     return this.makeRequest<T>(endpoint, { method: "DELETE" }, includeAuth);
   }
 
-  async postFormData<T>(
+  // CORRECTED: Fixed method for FormData requests
+  async putFormData<T>(
     endpoint: string,
     formData: FormData,
     includeAuth = true
   ): Promise<ApiResponse<T>> {
+    const url = `${this.baseURL}${endpoint}`;
+
+    // Create headers without Content-Type - let browser set it for FormData
     const headers: HeadersInit = {};
 
     if (includeAuth) {
@@ -166,15 +181,39 @@ class ApiClient {
       }
     }
 
-    return this.makeRequest<T>(
-      endpoint,
-      {
-        method: "POST",
-        body: formData,
-        headers,
-      },
-      false // Don't include default headers since we're sending FormData
-    );
+    const config: RequestInit = {
+      method: "PUT", // Changed from POST to PUT
+      body: formData,
+      headers,
+      signal: AbortSignal.timeout(this.timeout),
+    };
+
+    try {
+      const response = await fetch(url, config);
+      return await this.handleResponse<T>(response);
+    } catch (error) {
+      // Handle network and timeout errors
+      if (error instanceof Error) {
+        if (error.name === "AbortError") {
+          throw new Error("Request timeout");
+        }
+        // If it's our custom ApiError, re-throw it
+        if (error instanceof ApiError) {
+          throw error;
+        }
+        throw new Error(error.message);
+      }
+      throw new Error("Network error occurred");
+    }
+  }
+
+  // Keep the old method for backward compatibility but renamed
+  async postFormData<T>(
+    endpoint: string,
+    formData: FormData,
+    includeAuth = true
+  ): Promise<ApiResponse<T>> {
+    return this.putFormData<T>(endpoint, formData, includeAuth);
   }
 }
 

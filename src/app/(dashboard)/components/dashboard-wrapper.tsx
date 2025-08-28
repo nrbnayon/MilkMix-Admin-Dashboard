@@ -82,6 +82,11 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
       href: "/settings",
       iconSrc: "https://cdn.lordicon.com/asyunleq.json",
     },
+    {
+      label: "Support",
+      href: "/support",
+      iconSrc: "https://cdn.lordicon.com/jdgfsfzr.json",
+    },
   ];
 
   const handleMouseDown = (e: React.MouseEvent) => {

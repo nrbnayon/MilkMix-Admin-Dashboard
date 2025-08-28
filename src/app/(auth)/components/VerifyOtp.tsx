@@ -1,4 +1,3 @@
-// src\app\(auth)\components\VerifyOtp.tsx
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
@@ -31,7 +30,7 @@ type OtpFormData = z.infer<typeof otpSchema>;
 
 export default function VerifyOtp() {
   const [otp, setOtp] = useState("");
-  const [timeLeft, setTimeLeft] = useState(120);
+  const [timeLeft, setTimeLeft] = useState(180);
   const [email, setEmail] = useState("");
   const router = useRouter();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -75,7 +74,7 @@ export default function VerifyOtp() {
       const timePassed = Math.floor(
         (Date.now() - parseInt(otpSentTime)) / 1000
       );
-      const remainingTime = Math.max(0, 120 - timePassed);
+      const remainingTime = Math.max(0, 180 - timePassed);
       setTimeLeft(remainingTime);
       localStorage.setItem(timerKey, remainingTime.toString());
     }
@@ -126,9 +125,10 @@ export default function VerifyOtp() {
           duration: 2000,
         });
 
-        // Store verification status
+        // Store verification status and the verified OTP
         localStorage.setItem("otpVerified", "true");
         localStorage.setItem("verificationTime", Date.now().toString());
+        localStorage.setItem("verifiedOTP", data.otp); // Store the verified OTP
 
         // Clear timer from localStorage
         const timerKey = `otpTimer_${email}`;
@@ -151,11 +151,11 @@ export default function VerifyOtp() {
 
       if (response.success) {
         // Reset timer
-        setTimeLeft(120);
+        setTimeLeft(180);
         const newSentTime = Date.now();
         localStorage.setItem("otpSentTime", newSentTime.toString());
         const timerKey = `otpTimer_${email}`;
-        localStorage.setItem(timerKey, "120");
+        localStorage.setItem(timerKey, "180");
 
         toast.success("OTP resent successfully!", {
           description: `New verification code sent to ${email}`,
@@ -189,7 +189,7 @@ export default function VerifyOtp() {
               alt="logo"
               width={80}
               height={80}
-              className="w-[80px] h-[80px] sm:w-[120px] sm:h-[120px] md:w-[150px] md:h-[150px] lg:w-[200px] lg:h-[200px]"
+              className="w-[80px] h-[80px] sm:w-[180px] sm:h-[180px] md:w-[150px] md:h-[150px] lg:w-[200px] lg:h-[200px]"
             />
           </div>
           <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl leading-tight">
