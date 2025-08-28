@@ -1,4 +1,4 @@
-// src/lib/middleware-client.ts
+// src/lib/middleware-client.ts for localStorage tokens and middleware
 "use client";
 
 /**
