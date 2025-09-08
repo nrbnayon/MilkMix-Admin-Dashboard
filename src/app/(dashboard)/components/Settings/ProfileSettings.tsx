@@ -8,9 +8,6 @@ import {
   Edit3,
   Save,
   X,
-  MapPin,
-  Phone,
-  FileText,
   Mail,
   Trash2,
   LogOut,
@@ -413,82 +410,8 @@ export default function ProfileSettings() {
                   </div>
                 </div>
 
-                {/* Phone & Location Row */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <label className="flex items-center gap-3 text-sm font-medium text-slate-700">
-                      <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                        <Phone className="w-4 h-4 text-green-600" />
-                      </div>
-                      Phone Number
-                    </label>
-                    <input
-                      {...register("phone")}
-                      type="tel"
-                      disabled={!isEditing}
-                      className={`w-full px-4 py-3 border-2 rounded-md transition-all duration-200 ${
-                        isEditing
-                          ? "border-primary/30 focus:border-blue-500 focus:ring-0 bg-white text-black"
-                          : "border-slate-100 bg-slate-50 cursor-not-allowed text-slate-600"
-                      }`}
-                      placeholder="Enter your phone number"
-                    />
-                  </div>
 
-                  <div className="space-y-3">
-                    <label className="flex items-center gap-3 text-sm font-medium text-slate-700">
-                      <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <MapPin className="w-4 h-4 text-orange-600" />
-                      </div>
-                      Location
-                    </label>
-                    <input
-                      {...register("location")}
-                      type="text"
-                      disabled={!isEditing}
-                      className={`w-full px-4 py-3 border-2 rounded-md transition-all duration-200 ${
-                        isEditing
-                          ? "border-primary/30 focus:border-blue-500 focus:ring-0 bg-white text-black"
-                          : "border-slate-100 bg-slate-50 cursor-not-allowed text-slate-600"
-                      }`}
-                      placeholder="City, Country"
-                    />
-                  </div>
-                </div>
-
-                {/* Bio */}
-                <div className="space-y-3">
-                  <label className="flex items-center gap-3 text-sm font-medium text-slate-700">
-                    <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-                      <FileText className="w-4 h-4 text-indigo-600" />
-                    </div>
-                    Bio
-                  </label>
-                  <textarea
-                    {...register("bio")}
-                    rows={4}
-                    disabled={!isEditing}
-                    className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 resize-none ${
-                      isEditing
-                        ? "border-slate-200 focus:border-blue-500 focus:ring-0 bg-white text-black"
-                        : "border-slate-100 bg-slate-50 cursor-not-allowed text-slate-600"
-                    } ${errors.bio ? "border-red-400" : ""}`}
-                    placeholder="Tell us about yourself..."
-                  />
-                  <div className="flex items-center justify-between">
-                    {errors.bio ? (
-                      <p className="text-sm text-red-600 flex items-center gap-2">
-                        <div className="w-1 h-1 bg-red-600 rounded-full"></div>
-                        {errors.bio.message}
-                      </p>
-                    ) : (
-                      <p className="text-xs text-slate-500 flex items-center gap-2">
-                        <span className="w-1 h-1 bg-slate-400 rounded-full"></span>
-                        Maximum 500 characters
-                      </p>
-                    )}
-                  </div>
-                </div>
+              
               </div>
             </div>
           </div>

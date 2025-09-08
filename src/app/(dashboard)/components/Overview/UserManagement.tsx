@@ -1,5 +1,6 @@
 // src\app\(dashboard)\components\Overview\UserManagement.tsx
 "use client";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import type {
   GenericDataItem,
@@ -55,6 +56,8 @@ export default function UserManagement({
   buttonText = "Show all",
   pageUrl = "/manage-users",
 }: UserManagementProps) {
+  const pathname = usePathname();
+
   const {
     data: usersResponse,
     isLoading,
@@ -130,7 +133,6 @@ export default function UserManagement({
   // Delete user function
   const deleteUser = async (userId: string): Promise<boolean> => {
     try {
-      // Get auth token from localStorage, sessionStorage, or your auth context
       const token = localStorage.getItem("auth-token");
 
       const response = await fetch(
@@ -478,14 +480,7 @@ export default function UserManagement({
     }
   };
 
-  // const handleUsersSelect = (selectedIds: string[]) => {
-  //   console.log("Selected users:", selectedIds.length, "users");
-  //   // Handle bulk operations like bulk delete, bulk status change, etc.
-  // };
-
   const handleExport = (exportData: GenericDataItem[]) => {
-    // console.log("Exporting users:", exportData.length, "users");
-
     // Convert data to CSV format
     const headers = userColumns.map((col) => col.label).join(",");
     const csvData = exportData
@@ -554,15 +549,6 @@ export default function UserManagement({
       trendColor: "text-green-500",
       sparklinePoints: [10, 15, 18, 20, 25, 28, 30, stats.active],
     },
-    // {
-    //   title: "Inactive Users",
-    //   value: stats.inactive.toString(),
-    //   trend: stats.inactive > stats.active / 2 ? "up" : "down",
-    //   trendValue: "4.2",
-    //   trendColor:
-    //     stats.inactive > stats.active / 2 ? "text-red-500" : "text-green-500",
-    //   sparklinePoints: [15, 12, 10, 8, 6, 5, 4, stats.inactive],
-    // },
     {
       title: "Consultants",
       value: stats.consultants.toString(),
@@ -587,14 +573,6 @@ export default function UserManagement({
       trendColor: "text-green-500",
       sparklinePoints: [10, 15, 20, 25, 30, 35, 40, stats.farmUsers],
     },
-    // {
-    //   title: "Verified Users",
-    //   value: stats.verified.toString(),
-    //   trend: "up",
-    //   trendValue: "25.4",
-    //   trendColor: "text-green-500",
-    //   sparklinePoints: [5, 10, 15, 20, 25, 30, 35, stats.verified],
-    // },
     {
       title: "Pending Users",
       value: stats.pending.toString(),
@@ -605,8 +583,6 @@ export default function UserManagement({
       sparklinePoints: [8, 6, 5, 4, 3, 2, 3, stats.pending],
     },
   ];
-
-  // console.log("User Stats:", stats);
 
   // Handle loading state
   if (isLoading) {
@@ -652,9 +628,11 @@ export default function UserManagement({
   return (
     <div className="mx-auto">
       {/* Stats Display using StatsCard component */}
-      <div className="mb-6">
-        <StatsCard metrics={userMetrics} />
-      </div>
+      {pathname !== "/manage-users" && (
+        <div className="mb-6">
+          <StatsCard metrics={userMetrics} />
+        </div>
+      )}
 
       {/* Dynamic Table */}
       <DynamicTable
@@ -667,7 +645,6 @@ export default function UserManagement({
         onDataChange={handleDataChange}
         onItemDelete={handleUserDelete}
         isDataEditable={false}
-        // onItemsSelect={handleUsersSelect}
         onExport={handleExport}
         onRefresh={handleRefresh}
         buttonText={buttonText}
