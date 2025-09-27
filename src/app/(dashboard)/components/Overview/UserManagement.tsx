@@ -77,7 +77,7 @@ export default function UserManagement({
       Array.isArray(usersResponse.data)
     ) {
       const transformedUsers: GenericDataItem[] =
-        usersResponse.data.length > 0 &&
+        // usersResponse.data.length > 0 &&
         usersResponse.data.map((user: ApiUser) => {
           // Extract profile data with proper typing
           const profile: UserProfile = user.user_profile;
