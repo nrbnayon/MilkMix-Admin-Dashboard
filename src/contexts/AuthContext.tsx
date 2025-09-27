@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const normalizedUser: User = {
           id:
             typeof response.data.profile?.id === "number"
-              ? response.data.profile.id
+              ? response.data.profile?.id
               : 0,
           name: profileData?.name ?? "",
           email: credentials.email,

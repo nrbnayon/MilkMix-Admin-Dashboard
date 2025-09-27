@@ -113,7 +113,7 @@ export default function ProfileSettings() {
         phone_number?: string;
         profile_picture?: File;
       } = {
-        name: data.full_name, 
+        name: data.full_name,
         phone_number: data.phone,
       };
       if (profileImageFile) {
@@ -129,7 +129,8 @@ export default function ProfileSettings() {
       }
     } catch (error) {
       console.error("Failed to update profile:", error);
-      toast.error("Failed to update profile. Please try again.");}
+      toast.error("Failed to update profile?. Please try again.");
+    }
   };
 
   const handleCancel = () => {
@@ -164,7 +165,7 @@ export default function ProfileSettings() {
       return profileImage;
     }
     if (user?.user_profile?.profile_picture) {
-      return getProfilePictureUrl(user.user_profile.profile_picture);
+      return getProfilePictureUrl(user.user_profile?.profile_picture);
     }
     return null;
   };
@@ -409,9 +410,6 @@ export default function ProfileSettings() {
                     />
                   </div>
                 </div>
-
-
-              
               </div>
             </div>
           </div>

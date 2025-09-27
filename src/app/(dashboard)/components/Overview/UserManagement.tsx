@@ -76,14 +76,15 @@ export default function UserManagement({
       usersResponse.data &&
       Array.isArray(usersResponse.data)
     ) {
-      const transformedUsers: GenericDataItem[] = usersResponse.data.map(
-        (user: ApiUser) => {
+      const transformedUsers: GenericDataItem[] =
+        usersResponse.data.length > 0 &&
+        usersResponse.data.map((user: ApiUser) => {
           // Extract profile data with proper typing
           const profile: UserProfile = user.user_profile;
 
           // Safe name splitting
-          const fullName = profile.name || user.email.split("@")[0];
-          const nameParts = fullName.trim().split(" ");
+          const fullName = profile?.name || user?.email.split("@")[0];
+          const nameParts = fullName?.trim().split(" ");
           const firstName = nameParts[0] || "";
           const lastName =
             nameParts.length > 1 ? nameParts.slice(1).join(" ") : "";
@@ -92,12 +93,12 @@ export default function UserManagement({
             id: user.id.toString(),
             name: fullName,
             email: user.email,
-            avatar: getProfilePictureUrl(profile.profile_picture || ""),
+            avatar: getProfilePictureUrl(profile?.profile_picture || ""),
             status: user.is_verified ? "active" : "inactive",
             accountType: user.role,
             firstName: firstName,
             lastName: lastName,
-            phone: profile.phone_number || "",
+            phone: profile?.phone_number || "",
             username: user.email.split("@")[0],
             role: user.role,
             department:
@@ -108,23 +109,22 @@ export default function UserManagement({
                 : user.role === "farm_user"
                 ? "Farm User"
                 : "General",
-            joinDate: profile.joined_date,
+            joinDate: profile?.joined_date,
             isActive: user.is_verified,
             permissions: ["read"],
             accessLevel: user.role === "consultant" ? "advanced" : "basic",
             isEmailVerified: user.is_verified,
             isTwoFactorEnabled: false,
-            createdAt: profile.joined_date,
+            createdAt: profile?.joined_date,
             // Additional fields for better display
             verificationStatus: user.is_verified ? "verified" : "pending",
-            profileId: profile.id,
+            profileId: profile?.id,
             userId: user.id,
-            profilePicture: profile.profile_picture,
-            phoneNumber: profile.phone_number,
-            joinedDate: profile.joined_date,
+            profilePicture: profile?.profile_picture,
+            phoneNumber: profile?.phone_number,
+            joinedDate: profile?.joined_date,
           };
-        }
-      );
+        });
 
       setUsers(transformedUsers);
     }
