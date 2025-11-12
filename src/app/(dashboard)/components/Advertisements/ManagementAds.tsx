@@ -323,7 +323,7 @@ export default function ManagementAds({
       required: true,
       placeholder: "Enter ad title",
       validation: {
-        minLength: 5,
+        minLength: 3,
         maxLength: 100,
       },
       section: "basic",

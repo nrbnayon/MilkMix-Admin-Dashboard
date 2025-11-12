@@ -394,10 +394,10 @@ export default function UserSubscriptions({
         />
       ),
       variant: "ghost",
-      onClick: (item: GenericDataItem) => {
-        console.log("View user:", item.name);
-        // Add your view logic here
-      },
+      // onClick: (item: GenericDataItem) => {
+      //   console.log("View user:", item.name);
+      //   // Add your view logic here
+      // },
     },
     // {
     //   key: "edit",
@@ -440,7 +440,7 @@ export default function UserSubscriptions({
 
   const handleDataChange = (newData: GenericDataItem[]) => {
     setUsers(newData as TransformedUserData[]);
-    console.log("Users data changed:", newData);
+    // console.log("Users data changed:", newData);
   };
 
   const handleUsersSelect = (selectedIds: string[]) => {

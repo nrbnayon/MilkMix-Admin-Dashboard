@@ -431,10 +431,9 @@ export default function UserManagement({
       label: "View",
       icon: <Eye className="w-4 h-4" />,
       variant: "ghost",
-      onClick: (item) => {
-        console.log("View user:", item.id);
-        // Navigate to user details page or open modal
-      },
+      // onClick: (item) => {
+      //   console.log("View user:", item.id);
+      // },
     },
   ];
 

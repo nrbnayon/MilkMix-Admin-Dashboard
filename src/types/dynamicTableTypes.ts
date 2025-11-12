@@ -136,7 +136,7 @@ export interface ActionConfig {
     | "ghost"
     | "link";
   size?: "default" | "sm" | "lg" | "icon";
-  onClick: (item: GenericDataItem) => void;
+  onClick?: (item: GenericDataItem) => void;
   show?: (item: GenericDataItem) => boolean;
   className?: string;
   [key: string]:

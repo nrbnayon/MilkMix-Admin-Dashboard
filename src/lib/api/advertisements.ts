@@ -109,7 +109,7 @@ class AdvertisementAPI {
       }
 
       const data = await response.json();
-      console.log("Fetched advertisements from API:", data);
+      // console.log("Fetched advertisements from API:", data);
       return data;
     } catch (error) {
       console.error("Error fetching advertisements:", error);
@@ -136,7 +136,7 @@ class AdvertisementAPI {
       }
 
       const data = await response.json();
-      console.log("Fetched latest advertisements from API:", data);
+      // console.log("Fetched latest advertisements from API:", data);
       return data;
     } catch (error) {
       console.error("Error fetching latest advertisements:", error);
@@ -147,13 +147,13 @@ class AdvertisementAPI {
   // Enhanced create method with base64 and File support
   async create(data: CreateAdvertisementRequest): Promise<Advertisement> {
     try {
-      console.log("Creating advertisement with data:", {
-        ...data,
-        image:
-          data.image instanceof File
-            ? data.image.name
-            : "Base64 or invalid image",
-      });
+      // console.log("Creating advertisement with data:", {
+      //   ...data,
+      //   image:
+      //     data.image instanceof File
+      //       ? data.image.name
+      //       : "Base64 or invalid image",
+      // });
 
       // Process the image input (handles both File and base64 string)
       const imageFile = this.processImageInput(
@@ -173,7 +173,7 @@ class AdvertisementAPI {
       formData.append("end_date", data.end_date);
 
       // Log FormData contents for debugging
-      console.log("FormData contents:");
+      // console.log("FormData contents:");
       for (const [key, value] of formData.entries()) {
         if (value instanceof File) {
           console.log(
@@ -207,7 +207,7 @@ class AdvertisementAPI {
       }
 
       const result = await response.json();
-      console.log("Advertisement created successfully:", result);
+      // console.log("Advertisement created successfully:", result);
       return result;
     } catch (error) {
       console.error("Error creating advertisement:", error);
@@ -221,15 +221,15 @@ class AdvertisementAPI {
     data: UpdateAdvertisementRequest
   ): Promise<Advertisement> {
     try {
-      console.log("Updating advertisement with id:", id, "data:", {
-        ...data,
-        image:
-          data.image instanceof File
-            ? data.image.name
-            : data.image
-            ? "Base64 or non-file image data"
-            : "No image",
-      });
+      // console.log("Updating advertisement with id:", id, "data:", {
+      //   ...data,
+      //   image:
+      //     data.image instanceof File
+      //       ? data.image.name
+      //       : data.image
+      //       ? "Base64 or non-file image data"
+      //       : "No image",
+      // });
 
       const formData = new FormData();
 
@@ -293,7 +293,7 @@ class AdvertisementAPI {
       }
 
       const result = await response.json();
-      console.log("Advertisement updated successfully:", result);
+      // console.log("Advertisement updated successfully:", result);
       return result;
     } catch (error) {
       console.error("Error updating advertisement:", error);
@@ -303,7 +303,7 @@ class AdvertisementAPI {
 
   async delete(id: number): Promise<void> {
     try {
-      console.log("Deleting advertisement with id:", id);
+      // console.log("Deleting advertisement with id:", id);
 
       const response = await fetch(
         `${this.baseUrl}/api/advertisements/${id}/`,
@@ -328,7 +328,7 @@ class AdvertisementAPI {
         );
       }
 
-      console.log("Advertisement deleted successfully");
+      // console.log("Advertisement deleted successfully");
     } catch (error) {
       console.error("Error deleting advertisement:", error);
       throw error;

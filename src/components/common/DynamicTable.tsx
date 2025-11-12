@@ -896,7 +896,7 @@ export const DynamicTable: React.FC<DynamicTableProps> = ({
                                   } else if (action.key === "edit") {
                                     handleEdit(item);
                                   } else {
-                                    action.onClick(item);
+                                    action.onClick?.(item);
                                   }
                                 }}
                                 className={cn(action.className)}

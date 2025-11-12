@@ -63,10 +63,9 @@ export function useCreateAdvertisement() {
     mutationFn: (data: CreateAdvertisementRequest) => {
       return AdvertisementsAPI.create(data);
     },
-    onMutate: () => {
-    },
-    onSuccess: (data) => {
-      console.log("Advertisement created successfully:", data);
+    onMutate: () => {},
+    onSuccess: () => {
+      // console.log("Advertisement created successfully:", data);
       // Invalidate and refetch queries
       queryClient.invalidateQueries({
         queryKey: ADVERTISEMENTS_QUERY_KEYS.ALL,
@@ -107,11 +106,11 @@ export function useUpdateAdvertisement() {
       );
       return AdvertisementsAPI.update(id, data);
     },
-    onMutate: ({ id }) => {
-      console.log("Starting update advertisement mutation for id:", id);
-    },
-    onSuccess: (data, ) => {
-      console.log("Advertisement updated successfully:", data);
+    // onMutate: ({ id }) => {
+    //   console.log("Starting update advertisement mutation for id:", id);
+    // },
+    onSuccess: () => {
+      // console.log("Advertisement updated successfully:", data);
 
       // Invalidate and refetch queries
       queryClient.invalidateQueries({
@@ -144,14 +143,14 @@ export function useDeleteAdvertisement() {
 
   return useMutation({
     mutationFn: (id: number) => {
-      console.log("Deleting advertisement mutation with id:", id);
+      // console.log("Deleting advertisement mutation with id:", id);
       return AdvertisementsAPI.delete(id);
     },
-    onMutate: (id) => {
-      console.log("Starting delete advertisement mutation for id:", id);
-    },
-    onSuccess: (data, id) => {
-      console.log("Advertisement deleted successfully, id:", id);
+    // onMutate: (id) => {
+    //   console.log("Starting delete advertisement mutation for id:", id);
+    // },
+    onSuccess: () => {
+      // console.log("Advertisement deleted successfully, id:", id);
 
       // Invalidate and refetch queries
       queryClient.invalidateQueries({
